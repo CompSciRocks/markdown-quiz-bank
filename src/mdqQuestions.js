@@ -313,6 +313,32 @@ var mdqQuestions = {
             }
         });
         return optDictionary;
+    },
+
+    /**
+     * Return true if this question needs mermaid.
+     * 
+     * Identify by finding ```mermad somewhere in either the question
+     * text or the explanation. 
+     * @param {*} question 
+     */
+    needsMermaid: function (question) {
+        return !!question.rawContent.match(/```mermaid/s);
+    },
+
+    needsMathJax: function (question) {
+        return !!(question.rawContent.match(/\$\$(.*?)\$\$/s) || question.rawContent.match(/\\\(.*?\)\\/s))
+    },
+
+    needsPrism: function (question) {
+        let matches = question.rawContent.match(/```([A-Za-z0-9]+)/sg);
+        let need = false;
+        matches.forEach(el => {
+            if (el != '```mermaid') {
+                need = true;
+            }
+        });
+        return need;
     }
 
 }

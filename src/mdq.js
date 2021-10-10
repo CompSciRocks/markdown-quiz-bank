@@ -2,6 +2,9 @@
  * Main script for Markdown Question Quiz. This hands off to other files
  * as needed for actually handling the grading and layout. 
  */
+var mermaid_config = {
+    startOnLoad: false
+};
 var mdq = {
 
     /**
@@ -12,8 +15,11 @@ var mdq = {
     path: {
         'bootstrap5': 'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
         'marked': 'https://cdnjs.cloudflare.com/ajax/libs/marked/3.0.7/marked.min.js',
-        'mathjax': '',
-        'mermaid': '',
+        'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/startup.js',
+        'mermaid': 'https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.13.2/mermaid.min.js',
+        'prismJS': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js',
+        'prismAutoload': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/plugins/autoloader/prism-autoloader.min.js',
+        'prismCSS': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism.min.css',
     },
 
     /**
@@ -47,6 +53,7 @@ var mdq = {
             }, questions: [],
             theme: '',
             css: true,
+            syntaxHighlight: true,
         };
         this.config = { ...def, ...config };
 
@@ -58,8 +65,12 @@ var mdq = {
             this.config.questions[j] = temp;
         }
 
+        window.Prism = window.Prism || {};
+        Prism.manual = true;
+
         await this.loadFiles();
         await this.loadScripts(this.getScripts(), this.buildPage);
+
         // this.buildPage();
     },
 
@@ -110,7 +121,26 @@ var mdq = {
             scripts.push(this.path.bootstrap5);
         }
 
-        // @TODO Add others eventually, will require looking at content of questions
+        let mathjax = false;
+        let mermaid = false;
+        let prism = false;
+
+        mdq.loadedQuestions.forEach(q => {
+            if (!mathjax && mdqQuestions.needsMathJax(q)) {
+                scripts.push(this.path.mathjax);
+                mathjax = true;
+            }
+            if (!mermaid && mdqQuestions.needsMermaid(q)) {
+                scripts.push(this.path.mermaid);
+                mermaid = true;
+            }
+            if (!prism && mdqQuestions.needsPrism(q)) {
+                scripts.push(this.path.prismCSS);
+                scripts.push(this.path.prismJS);
+                scripts.push(this.path.prismAutoload);
+                prism = true;
+            }
+        });
 
         return scripts;
     },
@@ -149,6 +179,21 @@ var mdq = {
                 document.querySelector('button[data-hash="' + el.getAttribute('data-hash') + '"]').disabled = false;
             });
         });
+
+        // Fix mermaid elements
+        let mermaidPre = document.querySelectorAll('pre code.language-mermaid');
+        mermaidPre.forEach(el => {
+            let parent = el.parentElement;
+            let newDiv = document.createElement('div');
+            newDiv.classList.add('mermaid');
+            newDiv.innerHTML = el.innerHTML;
+            el.parentElement.replaceChild(newDiv, el);
+        });
+        console.info(mermaid);
+
+        if (Prism.highlightAll) {
+            Prism.highlightAll(mdq.config.parent ? document.getElementById(mdq.config.parent) : document);
+        }
     },
 
 
