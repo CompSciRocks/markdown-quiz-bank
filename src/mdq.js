@@ -180,6 +180,14 @@ var mdq = {
                 document.querySelector('button[data-hash="' + el.getAttribute('data-hash') + '"]').disabled = false;
             });
         });
+        let sels = document.querySelectorAll('div.mdq-question select[data-hash]');
+        sels.forEach(sel => {
+            sel.value = -1; // Start unselected
+            sel.addEventListener('change', evt => {
+                sel.classList.remove('correct', 'incorrect');
+                document.querySelector('button[data-hash="' + sel.getAttribute('data-hash') + '"]').disabled = false;
+            });
+        });
 
         // Fix mermaid elements
         let mermaidPre = document.querySelectorAll('pre code.language-mermaid');
@@ -191,7 +199,7 @@ var mdq = {
             el.parentElement.replaceChild(newDiv, el);
         });
 
-        if (MathJax && MathJax.typeset) {
+        if (typeof MathJax !== 'undefined' && MathJax.typeset) {
             MathJax.typeset();
         }
 

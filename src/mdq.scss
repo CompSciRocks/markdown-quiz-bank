@@ -14,7 +14,8 @@ div.mdq-wrap {
             border-top: none;
         }
 
-        input {
+        input,
+        select {
             &.correct {
                 background-color: #ccffcc !important;
             }

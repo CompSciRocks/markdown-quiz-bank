@@ -1,3 +1,5 @@
+
+
 /**
  * Functions that are specific to question types or involve
  * grading. 
@@ -219,6 +221,18 @@ var mdqQuestions = {
                 }
             }
         });
+        let selects = document.querySelectorAll('div.mdq-question[data-hash="' + question.hash + '"] select');
+        selects.forEach(el => {
+            el.classList.remove('correct', 'incorrect');
+            var selected = el.options[el.selectedIndex];
+            if (selected) {
+                if (selected.getAttribute('data-c') == '1') {
+                    el.classList.add('correct');
+                } else {
+                    el.classList.add('incorrect');
+                }
+            }
+        });
     },
 
     /**
@@ -279,6 +293,7 @@ var mdqQuestions = {
     },
 
     parseFields: function (md, question) {
+        // Text input fields 
         md = md.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
             opts = mdqQuestions.fibParseOptions(opts);
 
@@ -295,6 +310,40 @@ var mdqQuestions = {
             input.setAttribute('data-opts', JSON.stringify(opts));
 
             return input.outerHTML;
+        });
+
+        // Dropdowns
+        md = md.replace(/___{(.*?)}\[(.*?)]/g, (match, values, opts) => {
+            opts = mdqQuestions.fibParseOptions(opts);
+
+            let sel = document.createElement('select');
+            sel.setAttribute('data-hash', question.hash);
+            if (mdq.config.theme == 'bootstrap5') {
+                sel.classList.add('form-select');
+            }
+
+            let valRay = values.split(/\s*?\|\s*?/);
+            let optRay = []; // Put into array so we can shuffle if requested
+            valRay.forEach(el => {
+                let isCorrect = !!el.match(/^\+:/);
+                el = el.replace(/^(\+|\-):/, '');
+
+                let newOpt = document.createElement('option');
+                newOpt.setAttribute('data-c', isCorrect ? 1 : 0);
+                newOpt.value = el;
+                newOpt.innerHTML = el;
+                optRay.push(newOpt);
+            });
+
+            if (opts.shuffle && (opts.shuffle == '1' || opts.shuffle.match(/^(t|y)/i))) {
+                optRay = mdq.shuffle(optRay);
+            }
+
+            optRay.forEach(opt => {
+                sel.appendChild(opt);
+            });
+
+            return sel.outerHTML;
         });
         return md;
     },
@@ -333,6 +382,9 @@ var mdqQuestions = {
     needsPrism: function (question) {
         let matches = question.rawContent.match(/```([A-Za-z0-9]+)/sg);
         let need = false;
+        if (!matches) {
+            return false;
+        }
         matches.forEach(el => {
             if (el != '```mermaid') {
                 need = true;

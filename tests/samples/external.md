@@ -1,5 +1,5 @@
 ---
-title: Exteral script test
+title: External script test
 type: mc
 answer: A
 ---

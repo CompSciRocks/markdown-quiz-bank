@@ -180,6 +180,14 @@ var mdq = {
                 document.querySelector('button[data-hash="' + el.getAttribute('data-hash') + '"]').disabled = false;
             });
         });
+        let sels = document.querySelectorAll('div.mdq-question select[data-hash]');
+        sels.forEach(sel => {
+            sel.value = -1; // Start unselected
+            sel.addEventListener('change', evt => {
+                sel.classList.remove('correct', 'incorrect');
+                document.querySelector('button[data-hash="' + sel.getAttribute('data-hash') + '"]').disabled = false;
+            });
+        });
 
         // Fix mermaid elements
         let mermaidPre = document.querySelectorAll('pre code.language-mermaid');
@@ -191,7 +199,7 @@ var mdq = {
             el.parentElement.replaceChild(newDiv, el);
         });
 
-        if (MathJax && MathJax.typeset) {
+        if (typeof MathJax !== 'undefined' && MathJax.typeset) {
             MathJax.typeset();
         }
 
@@ -450,9 +458,11 @@ var mdq = {
  * Functions for dealing with the CSS that this script uses
  */
 var mdqCSS = {
-    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}
+    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}
 `,
-};/**
+};
+
+/**
  * Functions that are specific to question types or involve
  * grading. 
  */
@@ -673,6 +683,18 @@ var mdqQuestions = {
                 }
             }
         });
+        let selects = document.querySelectorAll('div.mdq-question[data-hash="' + question.hash + '"] select');
+        selects.forEach(el => {
+            el.classList.remove('correct', 'incorrect');
+            var selected = el.options[el.selectedIndex];
+            if (selected) {
+                if (selected.getAttribute('data-c') == '1') {
+                    el.classList.add('correct');
+                } else {
+                    el.classList.add('incorrect');
+                }
+            }
+        });
     },
 
     /**
@@ -733,6 +755,7 @@ var mdqQuestions = {
     },
 
     parseFields: function (md, question) {
+        // Text input fields 
         md = md.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
             opts = mdqQuestions.fibParseOptions(opts);
 
@@ -749,6 +772,40 @@ var mdqQuestions = {
             input.setAttribute('data-opts', JSON.stringify(opts));
 
             return input.outerHTML;
+        });
+
+        // Dropdowns
+        md = md.replace(/___{(.*?)}\[(.*?)]/g, (match, values, opts) => {
+            opts = mdqQuestions.fibParseOptions(opts);
+
+            let sel = document.createElement('select');
+            sel.setAttribute('data-hash', question.hash);
+            if (mdq.config.theme == 'bootstrap5') {
+                sel.classList.add('form-select');
+            }
+
+            let valRay = values.split(/\s*?\|\s*?/);
+            let optRay = []; // Put into array so we can shuffle if requested
+            valRay.forEach(el => {
+                let isCorrect = !!el.match(/^\+:/);
+                el = el.replace(/^(\+|\-):/, '');
+
+                let newOpt = document.createElement('option');
+                newOpt.setAttribute('data-c', isCorrect ? 1 : 0);
+                newOpt.value = el;
+                newOpt.innerHTML = el;
+                optRay.push(newOpt);
+            });
+
+            if (opts.shuffle && (opts.shuffle == '1' || opts.shuffle.match(/^(t|y)/i))) {
+                optRay = mdq.shuffle(optRay);
+            }
+
+            optRay.forEach(opt => {
+                sel.appendChild(opt);
+            });
+
+            return sel.outerHTML;
         });
         return md;
     },
@@ -787,6 +844,9 @@ var mdqQuestions = {
     needsPrism: function (question) {
         let matches = question.rawContent.match(/```([A-Za-z0-9]+)/sg);
         let need = false;
+        if (!matches) {
+            return false;
+        }
         matches.forEach(el => {
             if (el != '```mermaid') {
                 need = true;
