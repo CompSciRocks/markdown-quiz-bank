@@ -139,6 +139,16 @@ var mdq = {
         } else {
             document.getElementById(mdq.config.parent).appendChild(wrapper);
         }
+
+        // Don't need to add anything, but do need to
+        // attach events to all the inputs
+        let inputs = document.querySelectorAll('div.mdq-question input[data-hash]');
+        inputs.forEach((el) => {
+            el.addEventListener('keyup', evt => {
+                el.classList.remove('correct', 'incorrect');
+                document.querySelector('button[data-hash="' + el.getAttribute('data-hash') + '"]').disabled = false;
+            });
+        });
     },
 
 
@@ -149,11 +159,12 @@ var mdq = {
     questionElement: function (question) {
         var div = document.createElement('div');
         div.setAttribute('class', 'mdq-question');
+        div.setAttribute('data-hash', question.hash);
         div.setAttribute('id', question.hash);
 
         let divContent = document.createElement('div');
         divContent.setAttribute('class', 'md-question-body');
-        divContent.innerHTML = mdq.formatQuestion(question.markdown);
+        divContent.innerHTML = mdq.formatQuestion(question);
 
         div.appendChild(divContent);
 
@@ -217,11 +228,17 @@ var mdq = {
      * of the work, but we'll hand off as needed for custom 
      * stuff. 
      * 
-     * @param {*} questionText 
+     * @param {*} question
      */
-    formatQuestion: function (questionText) {
-        return marked(questionText);
+    formatQuestion: function (question) {
+        let parsed = marked(question.markdown);
+        if (mdq.isFIB(question)) {
+            parsed = mdqQuestions.parseFields(parsed, question);
+        }
+        return parsed;
     },
+
+
 
     /**
      * Remotely loads the markdown files and stores them in the 
@@ -340,6 +357,15 @@ var mdq = {
             if (question.sections.answers !== undefined) {
                 return true;
             }
+        }
+        return false;
+    },
+
+    isFIB: function (question) {
+        let qType = question.frontMatter.type ?? '';
+        qType = qType.trim();
+        if (qType.toLowerCase() == 'fib' || qType.match(/^fill.*?/i)) {
+            return true;
         }
         return false;
     },

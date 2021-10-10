@@ -13,6 +13,16 @@ div.mdq-wrap {
         &:first-child {
             border-top: none;
         }
+
+        input {
+            &.correct {
+                background-color: #ccffcc !important;
+            }
+
+            &.incorrect {
+                background-color: #ffc2b3 !important;
+            }
+        }
     }
 
     .mdq-mc-grid {
@@ -59,9 +69,10 @@ div.mdq-wrap {
     }
 
     // Override for Bootstrap 5
-    .form-select {
+    .form-select,
+    .form-control {
         width  : auto;
-        display: inline;
+        display: inline !important;
     }
 
     .mdq-tf-result {
@@ -77,4 +88,6 @@ div.mdq-wrap {
             color: red;
         }
     }
+
+
 }

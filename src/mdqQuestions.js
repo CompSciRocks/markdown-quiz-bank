@@ -162,8 +162,10 @@ var mdqQuestions = {
             mdqQuestions.checkMCQuestion(question);
         } else if (mdq.isTrueFalse(question)) {
             mdqQuestions.checkTFQuestion(question);
+        } else if (mdq.isFIB(question)) {
+            mdqQuestions.checkFIBQuestion(question);
         } else {
-            console.error('Only MC checking is implemented for now');
+            console.error('Only MC/TF/FIB checking is implemented for now');
             return;
         }
 
@@ -172,6 +174,51 @@ var mdqQuestions = {
         if (helpButton) {
             helpButton.disabled = false;
         }
+    },
+
+    /**
+     * Check a fill in the blank question
+     * @param {*} question 
+     */
+    checkFIBQuestion: function (question) {
+        let inputs = document.querySelectorAll('div.mdq-question[data-hash="' + question.hash + '"] input');
+        inputs.forEach(el => {
+            el.classList.remove('correct', 'incorrect');
+
+            if (el.value != '') {
+                // Don't add classes if there's not a value
+                let json = JSON.parse(el.getAttribute('data-opts'));
+                let correct = false;
+                if (json.regex) {
+                    let regexString = el.getAttribute('data-c');
+
+                    // Get flags, if they're there
+                    let flags = '';
+                    let flagMatch = regexString.match(/\/([gimy]*)$/);
+                    if (flagMatch) {
+                        flags = flagMatch[1];
+                    }
+                    // Clear off regex delimiters
+                    regexString = regexString.replace(/^\//, '').replace(/\/[gimy]*$/, '');
+
+                    let regex = new RegExp(regexString, flags);
+                    //regex = regex.replace(/^\//, '').replace(/\/$/, '');
+                    correct = !!el.value.match(regex);
+                } else {
+                    if (json.caseSensitive) {
+                        correct = el.value == el.getAttribute('data-c');
+                    } else {
+                        correct = el.value.toLowerCase() == el.getAttribute('data-c').toLowerCase();
+                    }
+                }
+
+                if (correct) {
+                    el.classList.add('correct');
+                } else {
+                    el.classList.add('incorrect');
+                }
+            }
+        });
     },
 
     /**
@@ -229,5 +276,43 @@ var mdqQuestions = {
             }
         }
         return false;
+    },
+
+    parseFields: function (md, question) {
+        md = md.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
+            opts = mdqQuestions.fibParseOptions(opts);
+
+            let input = document.createElement('input');
+            input.setAttribute('data-hash', question.hash);
+            input.setAttribute('data-c', correct);
+            if (mdq.config.theme == 'bootstrap5') {
+                input.classList.add('form-control');
+            }
+            if (opts.width !== undefined) {
+                input.style.width = opts.width;
+            }
+
+            input.setAttribute('data-opts', JSON.stringify(opts));
+
+            return input.outerHTML;
+        });
+        return md;
+    },
+
+    /**
+     * Parse the matched options string into a dictionary
+     * @param {*} optsString 
+     */
+    fibParseOptions: function (optsString) {
+        let opts = optsString.split(/\s*?,\s*?/);
+        let optDictionary = {};
+        opts.forEach(opt => {
+            let split = opt.split(/\s*?:\s*?/);
+            if (split[0] !== undefined && split[1] !== undefined) {
+                optDictionary[mdq.toCamelCase(split[0].trim())] = split[1].trim();
+            }
+        });
+        return optDictionary;
     }
+
 }
