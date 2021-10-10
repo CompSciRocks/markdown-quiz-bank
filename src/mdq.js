@@ -1,0 +1,356 @@
+/**
+ * Main script for Markdown Question Quiz. This hands off to other files
+ * as needed for actually handling the grading and layout. 
+ */
+var mdq = {
+
+    /**
+     * URLs to use for loading external JS libraries, most likely
+     * from a CDN. These will be loaded as needed depeding on the
+     * content of the questions. 
+     */
+    path: {
+        'bootstrap5': 'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
+        'marked': 'https://cdnjs.cloudflare.com/ajax/libs/marked/3.0.7/marked.min.js',
+        'mathjax': '',
+        'mermaid': '',
+    },
+
+    /**
+     * Holder for the questions as they're loaded remotely before
+     * actually rendering to the page.  
+     */
+    loadedQuestions: [],
+
+    /**
+     * Stores the config option passed after normalizing so that it
+     * can be accessed by all the methods. 
+     */
+    config: {},
+
+    /**
+     * Setup the page, passing any config options needed. Normalizes the
+     * config property to include required properties with their default
+     * values if they're not already specified. 
+     */
+    init: async function (config) {
+        let def = {
+            count: 5,
+            parent: '',
+            lang: {
+                correct: 'Correct',
+                incorrect: 'Incorrect',
+                check: 'Check',
+                help: 'Help',
+                'true': 'True',
+                'false': 'False',
+            }, questions: [],
+            theme: '',
+            css: true,
+        };
+        this.config = { ...def, ...config };
+
+        // Shuffle the questions
+        for (let i = this.config.questions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = this.config.questions[i];
+            this.config.questions[i] = this.config.questions[j];
+            this.config.questions[j] = temp;
+        }
+
+        await this.loadFiles();
+        await this.loadScripts(this.getScripts(), this.buildPage);
+        // this.buildPage();
+    },
+
+    /**
+     * Load scripts and style sheets from a list - scriptList - and
+     * then call callback function after they've all loaded. This
+     * will call itself recursively as the scripts onload so that 
+     * this acts like a synchronous load. 
+     * 
+     * @param {*} scriptList 
+     * @param {*} callback 
+     */
+    loadScripts: function (scriptList, callback) {
+        if (scriptList.length < 1) {
+            callback();
+            return;
+        }
+        let currentScript = scriptList.shift();
+        if (currentScript.endsWith('.js')) {
+            var script = document.createElement('script');
+            script.src = currentScript;
+            script.async = false;
+            script.addEventListener('load', () => {
+                this.loadScripts(scriptList, callback);
+            });
+            document.head.appendChild(script);
+        } else if (currentScript.endsWith('.css')) {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = currentScript;
+            link.media = 'all';
+            link.addEventListener('load', () => {
+                this.loadScripts(scriptList, callback);
+            })
+            document.head.appendChild(link);
+        }
+    },
+
+    /**
+     * Returns a list of scripts or stylesheets that need to be 
+     * loaded based on contents of the queued questions. 
+     */
+    getScripts: function () {
+        scripts = [];
+        scripts.push(this.path.marked); // always need marked
+        if (mdq.config.theme == 'bootstrap5') {
+            scripts.push(this.path.bootstrap5);
+        }
+
+        // @TODO Add others eventually, will require looking at content of questions
+
+        return scripts;
+    },
+
+    /**
+     * Take the loaded questions and build the HTML for the page
+     */
+    buildPage: function () {
+
+        // Add the MDQ CSS if requested
+        if (mdq.config.css) {
+            var s = document.createElement('style');
+            s.setAttribute('type', 'text/css');
+            s.appendChild(document.createTextNode(mdqCSS.cssContents));
+            document.head.appendChild(s);
+        }
+
+        var wrapper = document.createElement("div");
+        wrapper.setAttribute('class', 'mdq-wrap ' + (mdq.config.theme == 'bootstrap5' ? 'container' : ''));
+        mdq.loadedQuestions.forEach(question => {
+            wrapper.appendChild(mdq.questionElement(question));
+        });
+
+        if (mdq.config.parent == '') {
+            document.body.appendChild(wrapper);
+        } else {
+            document.getElementById(mdq.config.parent).appendChild(wrapper);
+        }
+    },
+
+
+    /**
+     * Returns a div element for an individual question
+     * @param {*} question 
+     */
+    questionElement: function (question) {
+        var div = document.createElement('div');
+        div.setAttribute('class', 'mdq-question');
+        div.setAttribute('id', question.hash);
+
+        let divContent = document.createElement('div');
+        divContent.setAttribute('class', 'md-question-body');
+        divContent.innerHTML = mdq.formatQuestion(question.markdown);
+
+        div.appendChild(divContent);
+
+        let qType = '';
+        if (mdq.isMultipleChoice(question)) {
+            let divMC = mdqQuestions.mcHTML(question);
+            divMC.addEventListener('click', (evt) => {
+                mdqQuestions.highlightMC(evt);
+            });
+            div.appendChild(divMC);
+            qType = 'MC';
+        }
+
+        let divButtons = document.createElement('div');
+        divButtons.setAttribute('class', 'mdq-buttons');
+        let btnCheck = document.createElement('button');
+        btnCheck.setAttribute('data-type', qType);
+        btnCheck.setAttribute('data-hash', question.hash);
+        btnCheck.setAttribute('disabled', true);
+        btnCheck.addEventListener('click', (evt) => {
+            mdqQuestions.checkQuestion(evt.currentTarget.getAttribute('data-hash'));
+        });
+        btnCheck.innerHTML = mdq.config.lang.check + '...';
+        divButtons.appendChild(btnCheck);
+
+        if (question.sections.explanation !== undefined) {
+            let btnExplain = document.createElement('button');
+            btnExplain.setAttribute('disabled', true);
+            btnExplain.setAttribute('data-help', 1);
+            btnExplain.setAttribute('data-hash', question.hash);
+            btnExplain.addEventListener('click', (evt) => {
+                let elExplain = document.querySelector('div.mdq-explanation[data-hash="' + question.hash + '"]');
+                if (elExplain) {
+                    elExplain.style.display = 'block';
+                }
+            });
+            btnExplain.innerHTML = this.config.lang.help + '...';
+            divButtons.appendChild(btnExplain);
+        }
+        div.appendChild(divButtons);
+
+        if (question.sections.explanation !== undefined) {
+            let divExplanation = document.createElement('div');
+            divExplanation.setAttribute('class', 'mdq-explanation');
+            divExplanation.setAttribute('data-hash', question.hash);
+            divExplanation.style.display = 'none';
+            divExplanation.innerHTML = marked(question.sections.explanation);
+            div.appendChild(divExplanation);
+        }
+
+        return div;
+    },
+
+    /**
+     * Parse the markdown to HTML. Marked will be doing most
+     * of the work, but we'll hand off as needed for custom 
+     * stuff. 
+     * 
+     * @param {*} questionText 
+     */
+    formatQuestion: function (questionText) {
+        return marked(questionText);
+    },
+
+    /**
+     * Remotely loads the markdown files and stores them in the 
+     * loadedQuestions property. This also calls the formatting
+     * functions to get the HTML for each question and queue
+     * any needed remote CSS or JavaScript files. 
+     */
+    loadFiles: async function (idx) {
+        for (const url of this.config.questions) {
+            let response = await fetch(url);
+            if (response.status >= 200 && response.status < 400) {
+                let data = await response.text();
+                this.loadedQuestions.push(this.fileInfo(data));
+            }
+            if (this.loadedQuestions.length >= this.config.count) {
+                break;
+            }
+        }
+    },
+
+    /**
+     * Returns an object with information about a single question
+     * file that can be put into the loadedQuestions array. 
+     * @param {*} fileContent 
+     */
+    fileInfo: function (fileContent) {
+        fileContent = fileContent.trim();
+        let ret = {};
+        ret.rawContent = fileContent;
+
+        // Need a randomish identifier for later
+        ret.hash = Math.random().toString(36).slice(-10);
+
+        // Front matter
+        ret.frontMatter = {};
+        let fmMatch = fileContent.match(/^---\s*?(.*?)---/s);
+        if (fmMatch) {
+            ret.frontMatter = this.parseFrontMatter(fmMatch[1].trim());
+        }
+        fileContent = fileContent.replace(/^---\s*?(.*?)---/s, '').trim();
+
+        // Split on the section headers
+        let sections = fileContent.split(/---[\t ]*?([A-Za-z ]+)/g);
+        ret.markdown = sections.shift().trim();
+
+        ret.sections = {};
+        for (let i = 0; i < sections.length - 1; i += 2) {
+            ret.sections[this.toCamelCase(sections[i].trim())] = sections[i + 1].trim();
+        }
+        return ret;
+    },
+
+    /**
+     * Parse front matter into an object, with the header as key
+     * @param {*} frontMatter 
+     */
+    parseFrontMatter: function (frontMatter) {
+        let ret = {};
+        let lines = frontMatter.split(/\n\r?/);
+        lines.forEach(el => {
+            el = el.trim();
+            let sp = el.split(/\s*?:\s*?/);
+            if (sp.length == 2) {
+                ret[this.toCamelCase(sp[0].trim())] = sp[1].trim();
+            }
+        });
+        return ret;
+    },
+
+    /**
+     * Returns an object containing the different parts of the
+     * markdown content.
+     * 
+     * Not all questions will have all types. 
+     * 
+     * @param {*} content 
+     */
+    getParts: function (content) {
+        let ret = {
+            'frontMatter': { 'title': '', 'type': '', 'answer': '' },
+            'body': '',
+            'explanation': ''
+        };
+
+        return ret;
+    },
+
+    /**
+     * Returns a string converted to camelCase
+     * @see https://stackoverflow.com/a/2970588/1561431
+     * @param {*} str 
+     * @returns 
+     */
+    toCamelCase: function (str) {
+        return str
+            .replace(/\s(.)/g, function ($1) { return $1.toUpperCase(); })
+            .replace(/\s/g, '')
+            .replace(/^(.)/, function ($1) { return $1.toLowerCase(); });
+    },
+
+    /**
+     * Returns true if the question passed is a multiple choice question
+     * according to the top matter. 
+     * 
+     * Since MC is also the default type, we'll assume it's a multiple choice
+     * question if there is an answers section in the question.
+     * 
+     * @param {*} question 
+     */
+    isMultipleChoice: function (question) {
+        let qType = question.frontMatter.type ?? '';
+        qType = qType.trim();
+        if (qType.toLowerCase() == 'mc' || qType.match(/^mult.*?/i)) {
+            return true;
+        } else if (qType == '') {
+            if (question.sections.answers !== undefined) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    /**
+     * Returned a shuffled array
+     * @param {*} array 
+     */
+    shuffle: function (array) {
+        // Shuffle the questions
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+        return array;
+    }
+}

@@ -1,0 +1,60 @@
+div.mdq-wrap {
+    .mdq-question {
+        margin: {
+            bottom: 48px;
+        }
+
+        padding: {
+            top: 16px;
+        }
+
+        border-top: 1px solid silver;
+
+        &:first-child {
+            border-top: none;
+        }
+    }
+
+    .mdq-mc-grid {
+        display              : grid;
+        grid-template-columns: min-content 1fr;
+        cursor               : pointer;
+
+        padding: {
+            top: 16px;
+        }
+
+        >div {
+            padding: {
+                right: 16px;
+            }
+
+            &.sel {
+                background: #eee;
+            }
+
+            &.correct {
+                background: #ccffcc;
+            }
+
+            &.incorrect {
+                background: #ffc2b3;
+            }
+        }
+    }
+
+    .mdq-buttons {
+        button {
+            margin: {
+                right: 16px;
+                top  : 16px;
+            }
+        }
+    }
+
+    .mdq-explanation {
+        margin: {
+            top: 16px;
+        }
+    }
+}
