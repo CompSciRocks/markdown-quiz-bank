@@ -11,10 +11,10 @@ jobs:
         uses: actions/checkout@master
       - uses: BetaHuhn/do-spaces-action@v2
         with:
-          access_key: ${{ secrets.ACCESS_KEY}}
-          secret_key: ${{ secrets.SECRET_KEY }}
-          space_name: ${{ secrets.SPACE_NAME }}
-          space_region: ${{ secrets.SPACE_REGION }}
+          access_key: ${{ ACCESS_KEY}}
+          secret_key: ${{ SECRET_KEY }}
+          space_name: ${{ SPACE_NAME }}
+          space_region: ${{ SPACE_REGION }}
           source: dist/mdq.min.js
           out_dir: quiz
           versioning: true
