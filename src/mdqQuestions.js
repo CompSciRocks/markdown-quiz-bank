@@ -67,6 +67,53 @@ var mdqQuestions = {
     },
 
     /**
+     * Returns the element to insert after a question for a true / false
+     * question. 
+     * 
+     * @param {*} question 
+     */
+    tfHTML: function (question) {
+        let answer = question.frontMatter.answer ?? 't';
+        answer = answer.match(/^f.*/i) ? 'F' : 'T'; // Unless specifically false, it's true
+
+        let div = document.createElement('div');
+        let sel = document.createElement('select');
+        sel.setAttribute('data-hash', question.hash);
+        sel.setAttribute('data-c', answer);
+        if (mdq.config.theme == 'bootstrap5') {
+            sel.classList.add('form-select');
+        }
+
+        let optTrue = document.createElement('option');
+        optTrue.innerHTML = mdq.config.lang.true;
+        optTrue.value = 'T';
+        sel.appendChild(optTrue);
+
+        let optFalse = document.createElement('option');
+        optFalse.innerHTML = mdq.config.lang.false;
+        optFalse.value = 'F';
+        sel.appendChild(optFalse);
+
+        // Start without either selected
+        sel.value = -1;
+
+        sel.addEventListener('change', (evt) => {
+            document.querySelector('button[data-hash="' + question.hash + '"][data-type="TF"]').disabled = false;
+            document.querySelector('span[data-result][data-hash="' + question.hash + '"]').innerHTML = '';
+        });
+        div.appendChild(sel);
+
+        let resultSpan = document.createElement('span');
+        resultSpan.classList.add('mdq-tf-result');
+        resultSpan.setAttribute('data-hash', question.hash);
+        resultSpan.setAttribute('data-result', 1);
+        resultSpan.innerHTML = '';
+        div.appendChild(resultSpan);
+
+        return div;
+    },
+
+    /**
      * Highlight the row and select the radio button when a multiple choice grid
      * element is clicked. 
      * 
@@ -113,6 +160,8 @@ var mdqQuestions = {
 
         if (mdq.isMultipleChoice(question)) {
             mdqQuestions.checkMCQuestion(question);
+        } else if (mdq.isTrueFalse(question)) {
+            mdqQuestions.checkTFQuestion(question);
         } else {
             console.error('Only MC checking is implemented for now');
             return;
@@ -122,6 +171,29 @@ var mdqQuestions = {
         let helpButton = document.querySelector('button[data-help][data-hash="' + question.hash + '"]');
         if (helpButton) {
             helpButton.disabled = false;
+        }
+    },
+
+    /**
+     * Checks a TF question
+     * 
+     * @param {*} question 
+     */
+    checkTFQuestion: function (question) {
+        // Clear out the results span in case this isn't the first time
+        let resultSpan = document.querySelector('span[data-result][data-hash="' + question.hash + '"]');
+        resultSpan.classList.remove('correct', 'incorrect');
+        resultSpan.innerHTML = '';
+
+        let sel = document.querySelector('select[data-hash="' + question.hash + '"]');
+        if (sel.value == sel.getAttribute('data-c')) {
+            // Correct
+            resultSpan.classList.add('correct');
+            resultSpan.innerHTML = mdq.config.lang.correct;
+        } else {
+            // Incorrect
+            resultSpan.classList.add('incorrect');
+            resultSpan.innerHTML = mdq.config.lang.incorrect;
         }
     },
 

@@ -1,6 +1,7 @@
 ---
 Title: True / False sample question
 Answer: t
+type: tf
 ---
 ## True / False test question
 

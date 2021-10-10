@@ -165,6 +165,10 @@ var mdq = {
             });
             div.appendChild(divMC);
             qType = 'MC';
+        } else if (mdq.isTrueFalse(question)) {
+            let divTF = mdqQuestions.tfHTML(question);
+            div.appendChild(divTF);
+            qType = 'TF';
         }
 
         let divButtons = document.createElement('div');
@@ -173,6 +177,7 @@ var mdq = {
         btnCheck.setAttribute('data-type', qType);
         btnCheck.setAttribute('data-hash', question.hash);
         btnCheck.setAttribute('disabled', true);
+
         btnCheck.addEventListener('click', (evt) => {
             mdqQuestions.checkQuestion(evt.currentTarget.getAttribute('data-hash'));
         });
@@ -340,6 +345,19 @@ var mdq = {
     },
 
     /**
+     * Check if a question is true / false
+     * 
+     * This is done by looking at the type field in front matter. Anything 
+     * starting with t - case-insensitive - is considered a true false question.
+     * 
+     * @param {*} question 
+     */
+    isTrueFalse: function (question) {
+        let qType = question.frontMatter.type ?? '';
+        return !!qType.match(/^t.*?/i);
+    },
+
+    /**
      * Returned a shuffled array
      * @param {*} array 
      */
@@ -357,7 +375,7 @@ var mdq = {
  * Functions for dealing with the CSS that this script uses
  */
 var mdqCSS = {
-    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}
+    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select{width:auto;display:inline}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}
 `,
 };/**
  * Functions that are specific to question types or involve
@@ -428,6 +446,53 @@ var mdqQuestions = {
     },
 
     /**
+     * Returns the element to insert after a question for a true / false
+     * question. 
+     * 
+     * @param {*} question 
+     */
+    tfHTML: function (question) {
+        let answer = question.frontMatter.answer ?? 't';
+        answer = answer.match(/^f.*/i) ? 'F' : 'T'; // Unless specifically false, it's true
+
+        let div = document.createElement('div');
+        let sel = document.createElement('select');
+        sel.setAttribute('data-hash', question.hash);
+        sel.setAttribute('data-c', answer);
+        if (mdq.config.theme == 'bootstrap5') {
+            sel.classList.add('form-select');
+        }
+
+        let optTrue = document.createElement('option');
+        optTrue.innerHTML = mdq.config.lang.true;
+        optTrue.value = 'T';
+        sel.appendChild(optTrue);
+
+        let optFalse = document.createElement('option');
+        optFalse.innerHTML = mdq.config.lang.false;
+        optFalse.value = 'F';
+        sel.appendChild(optFalse);
+
+        // Start without either selected
+        sel.value = -1;
+
+        sel.addEventListener('change', (evt) => {
+            document.querySelector('button[data-hash="' + question.hash + '"][data-type="TF"]').disabled = false;
+            document.querySelector('span[data-result][data-hash="' + question.hash + '"]').innerHTML = '';
+        });
+        div.appendChild(sel);
+
+        let resultSpan = document.createElement('span');
+        resultSpan.classList.add('mdq-tf-result');
+        resultSpan.setAttribute('data-hash', question.hash);
+        resultSpan.setAttribute('data-result', 1);
+        resultSpan.innerHTML = '';
+        div.appendChild(resultSpan);
+
+        return div;
+    },
+
+    /**
      * Highlight the row and select the radio button when a multiple choice grid
      * element is clicked. 
      * 
@@ -474,6 +539,8 @@ var mdqQuestions = {
 
         if (mdq.isMultipleChoice(question)) {
             mdqQuestions.checkMCQuestion(question);
+        } else if (mdq.isTrueFalse(question)) {
+            mdqQuestions.checkTFQuestion(question);
         } else {
             console.error('Only MC checking is implemented for now');
             return;
@@ -483,6 +550,29 @@ var mdqQuestions = {
         let helpButton = document.querySelector('button[data-help][data-hash="' + question.hash + '"]');
         if (helpButton) {
             helpButton.disabled = false;
+        }
+    },
+
+    /**
+     * Checks a TF question
+     * 
+     * @param {*} question 
+     */
+    checkTFQuestion: function (question) {
+        // Clear out the results span in case this isn't the first time
+        let resultSpan = document.querySelector('span[data-result][data-hash="' + question.hash + '"]');
+        resultSpan.classList.remove('correct', 'incorrect');
+        resultSpan.innerHTML = '';
+
+        let sel = document.querySelector('select[data-hash="' + question.hash + '"]');
+        if (sel.value == sel.getAttribute('data-c')) {
+            // Correct
+            resultSpan.classList.add('correct');
+            resultSpan.innerHTML = mdq.config.lang.correct;
+        } else {
+            // Incorrect
+            resultSpan.classList.add('incorrect');
+            resultSpan.innerHTML = mdq.config.lang.incorrect;
         }
     },
 

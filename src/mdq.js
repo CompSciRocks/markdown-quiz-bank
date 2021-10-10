@@ -165,6 +165,10 @@ var mdq = {
             });
             div.appendChild(divMC);
             qType = 'MC';
+        } else if (mdq.isTrueFalse(question)) {
+            let divTF = mdqQuestions.tfHTML(question);
+            div.appendChild(divTF);
+            qType = 'TF';
         }
 
         let divButtons = document.createElement('div');
@@ -173,6 +177,7 @@ var mdq = {
         btnCheck.setAttribute('data-type', qType);
         btnCheck.setAttribute('data-hash', question.hash);
         btnCheck.setAttribute('disabled', true);
+
         btnCheck.addEventListener('click', (evt) => {
             mdqQuestions.checkQuestion(evt.currentTarget.getAttribute('data-hash'));
         });
@@ -337,6 +342,19 @@ var mdq = {
             }
         }
         return false;
+    },
+
+    /**
+     * Check if a question is true / false
+     * 
+     * This is done by looking at the type field in front matter. Anything 
+     * starting with t - case-insensitive - is considered a true false question.
+     * 
+     * @param {*} question 
+     */
+    isTrueFalse: function (question) {
+        let qType = question.frontMatter.type ?? '';
+        return !!qType.match(/^t.*?/i);
     },
 
     /**

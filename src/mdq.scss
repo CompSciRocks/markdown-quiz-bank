@@ -57,4 +57,24 @@ div.mdq-wrap {
             top: 16px;
         }
     }
+
+    // Override for Bootstrap 5
+    .form-select {
+        width  : auto;
+        display: inline;
+    }
+
+    .mdq-tf-result {
+        margin: {
+            left: 16px;
+        }
+
+        &.correct {
+            color: green;
+        }
+
+        &.incorrect {
+            color: red;
+        }
+    }
 }
