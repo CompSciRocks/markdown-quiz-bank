@@ -15,7 +15,7 @@ var mdq = {
     path: {
         'bootstrap5': 'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
         'marked': 'https://cdnjs.cloudflare.com/ajax/libs/marked/3.0.7/marked.min.js',
-        'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/startup.js',
+        'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-svg-full.min.js',
         'mermaid': 'https://cdnjs.cloudflare.com/ajax/libs/mermaid/8.13.2/mermaid.min.js',
         'prismJS': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js',
         'prismAutoload': 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/plugins/autoloader/prism-autoloader.min.js',
@@ -89,6 +89,7 @@ var mdq = {
             return;
         }
         let currentScript = scriptList.shift();
+
         if (currentScript.endsWith('.js')) {
             var script = document.createElement('script');
             script.src = currentScript;
@@ -189,7 +190,10 @@ var mdq = {
             newDiv.innerHTML = el.innerHTML;
             el.parentElement.replaceChild(newDiv, el);
         });
-        console.info(mermaid);
+
+        if (MathJax && MathJax.typeset) {
+            MathJax.typeset();
+        }
 
         if (Prism.highlightAll) {
             Prism.highlightAll(mdq.config.parent ? document.getElementById(mdq.config.parent) : document);

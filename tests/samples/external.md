@@ -19,9 +19,12 @@ public static void main(String[] cheese){}
 This should not be highlighted
 ```
 
-$$ e = mc^2 $$
+$$
+\LARGE
+e = mc^2 
+$$
 
-\(e = mc^2\)
+\\(\\LARGE e = mc^2\\)
 
 ---Answers
 a
@@ -29,3 +32,18 @@ a
 b
 ---
 c
+
+---Explanation
+```java
+public void chickenCluck() {}
+```
+
+```mermaid
+graph TD
+    C --> D
+```
+
+$$
+\LARGE
+x = 4
+$$
