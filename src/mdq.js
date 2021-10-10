@@ -54,6 +54,7 @@ var mdq = {
             theme: '',
             css: true,
             syntaxHighlight: true,
+            credit: true,
         };
         this.config = { ...def, ...config };
 
@@ -164,6 +165,13 @@ var mdq = {
         mdq.loadedQuestions.forEach(question => {
             wrapper.appendChild(mdq.questionElement(question));
         });
+
+        if (mdq.config.credit) {
+            var creditDiv = document.createElement('div');
+            creditDiv.classList.add('mdq-credit');
+            creditDiv.innerHTML = 'Quiz script by <a href="https://compsci.rocks/scripts/" target="_blank">CompSci.rocks</a>';
+            wrapper.appendChild(creditDiv);
+        }
 
         if (mdq.config.parent == '') {
             document.body.appendChild(wrapper);

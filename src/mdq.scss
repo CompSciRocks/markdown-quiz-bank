@@ -90,5 +90,18 @@ div.mdq-wrap {
         }
     }
 
+    .mdq-credit {
+        padding: {
+            top   : 32px;
+            bottom: 16px;
+        }
 
+        a {
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
 }
