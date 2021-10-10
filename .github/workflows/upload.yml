@@ -1,0 +1,22 @@
+name: Upload to DO Spaces
+on:
+  push:
+    branches:
+      - master
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@master
+      - uses: BetaHuhn/do-spaces-action@v2
+        with:
+          access_key: ${{ secrets.ACCESS_KEY}}
+          secret_key: ${{ secrets.SECRET_KEY }}
+          space_name: ${{ secrets.SPACE_NAME }}
+          space_region: ${{ secrets.SPACE_REGION }}
+          source: dist/mdq.min.js
+          out_dir: quiz
+          versioning: true
+          cdn_domain: scripts.compsci.rocks
+
