@@ -64,6 +64,6 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-notify');
 
-    grunt.registerTask('default', ['dist', 'watch']);
+    grunt.registerTask('default', ['build', 'watch']);
     grunt.registerTask('build', ['concat', 'sass', 'insert', 'uglify']);
 }

@@ -1,3 +1,4 @@
+{% raw %}
 ---
 title: Truth table sample
 type: fib
@@ -35,7 +36,4 @@ Fill in the following truth table
     </tr>
 </table>
 
----explanation
-When two boolean values are separated by an and - <code>&&</code> - then both must
-be `true` for the statement to be `true`. If either side is `false`, then the entire
-statement is `false`.
+{% endraw %}

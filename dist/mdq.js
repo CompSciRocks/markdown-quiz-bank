@@ -57,6 +57,7 @@ var mdq = {
             syntaxHighlight: true,
             credit: true,
             reload: true,
+            stripRaw: true,
         };
         this.config = { ...def, ...config };
 
@@ -379,7 +380,13 @@ var mdq = {
      */
     fileInfo: function (fileContent) {
         fileContent = fileContent.trim();
+        if (mdq.config.stripRaw) {
+            fileContent = fileContent.replace(/{%\s*?(end)?raw\s*?%}/sg, '').trim();
+        }
         let ret = {};
+
+        // Strip out the raw / endraw lines that appear to be needed
+        // when serving from a Jekyll generated site
         ret.rawContent = fileContent;
 
         // Need a randomish identifier for later
