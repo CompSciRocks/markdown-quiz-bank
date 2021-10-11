@@ -39,7 +39,7 @@ module.exports = function (grunt) {
         uglify: {
             dist: {
                 options: {
-                    banner: '/*\t<%= pkg.name %> - <%= pkg.version %>\n *\n *\t(c) <%= grunt.template.today("yyyy") %> Aelora Web Services, LLC\n *\thttps://compsci.rocks\n */\n',
+                    banner: '/*\t<%= pkg.name %> - <%= pkg.version %>\n *\n *\t(c) <%= grunt.template.today("yyyy") %> Aelora Web Services, LLC\n *\thttps://compsci.rocks/scripts/\n */\n',
                 },
                 files: {
                     'dist/mdq.min.js': 'dist/mdq.js',
@@ -65,5 +65,5 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-notify');
 
     grunt.registerTask('default', ['dist', 'watch']);
-    grunt.registerTask('dist', ['concat', 'sass', 'insert', 'uglify']);
+    grunt.registerTask('build', ['concat', 'sass', 'insert', 'uglify']);
 }

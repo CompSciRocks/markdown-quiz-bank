@@ -50,13 +50,17 @@ var mdq = {
                 help: 'Help',
                 'true': 'True',
                 'false': 'False',
+                reload: 'Reload',
             }, questions: [],
             theme: '',
             css: true,
             syntaxHighlight: true,
             credit: true,
+            reload: true,
         };
         this.config = { ...def, ...config };
+
+        this.loadedQuestions = [];
 
         // Shuffle the questions
         for (let i = this.config.questions.length - 1; i > 0; i--) {
@@ -85,13 +89,20 @@ var mdq = {
      * @param {*} callback 
      */
     loadScripts: function (scriptList, callback) {
+
         if (scriptList.length < 1) {
             callback();
             return;
         }
         let currentScript = scriptList.shift();
 
-        if (currentScript.endsWith('.js')) {
+        if (mdq.styleLoaded(currentScript) || mdq.scriptLoaded(currentScript)) {
+            // Won't ever get to the callback otherwise if the script
+            // is already loaded
+            callback();
+            return;
+        }
+        else if (currentScript.endsWith('.js')) {
             var script = document.createElement('script');
             script.src = currentScript;
             script.async = false;
@@ -110,6 +121,14 @@ var mdq = {
             })
             document.head.appendChild(link);
         }
+    },
+
+    styleLoaded: function (url) {
+        return !!document.querySelector('style[href="' + url + '"]');
+    },
+
+    scriptLoaded: function (url) {
+        return !!document.querySelector('script[src="' + url + '"]');
     },
 
     /**
@@ -153,9 +172,11 @@ var mdq = {
     buildPage: function () {
 
         // Add the MDQ CSS if requested
-        if (mdq.config.css) {
+        let cssLoaded = !!document.querySelector('style#mdq-css');
+        if (!cssLoaded && mdq.config.css) {
             var s = document.createElement('style');
             s.setAttribute('type', 'text/css');
+            s.setAttribute('id', 'mdq-css');
             s.appendChild(document.createTextNode(mdqCSS.cssContents));
             document.head.appendChild(s);
         }
@@ -166,12 +187,33 @@ var mdq = {
             wrapper.appendChild(mdq.questionElement(question));
         });
 
+        if (mdq.config.reload) {
+            let reloadDiv = document.createElement('div');
+            reloadDiv.classList.add('mdq-reload');
+            let reloadButton = document.createElement('button');
+            if (mdq.isBootstrap()) {
+                reloadButton.classList.add('btn', 'btn-primary');
+            }
+            reloadButton.innerHTML = mdq.config.lang.reload;
+            reloadButton.addEventListener('click', evt => {
+                mdq.init(mdq.config);
+            });
+            reloadDiv.appendChild(reloadButton);
+            wrapper.appendChild(reloadDiv);
+        }
+
         if (mdq.config.credit) {
             var creditDiv = document.createElement('div');
             creditDiv.classList.add('mdq-credit');
             creditDiv.innerHTML = 'Quiz script by <a href="https://compsci.rocks/scripts/" target="_blank">CompSci.rocks</a>';
             wrapper.appendChild(creditDiv);
         }
+
+        // Clear out existing questions
+        let existingQuestions = document.querySelectorAll('div.mdq-wrap');
+        existingQuestions.forEach(el => {
+            el.remove();
+        });
 
         if (mdq.config.parent == '') {
             document.body.appendChild(wrapper);
@@ -250,6 +292,9 @@ var mdq = {
         let divButtons = document.createElement('div');
         divButtons.setAttribute('class', 'mdq-buttons');
         let btnCheck = document.createElement('button');
+        if (mdq.isBootstrap()) {
+            btnCheck.classList.add('btn', 'btn-primary');
+        }
         btnCheck.setAttribute('data-type', qType);
         btnCheck.setAttribute('data-hash', question.hash);
         btnCheck.setAttribute('disabled', true);
@@ -265,6 +310,9 @@ var mdq = {
             btnExplain.setAttribute('disabled', true);
             btnExplain.setAttribute('data-help', 1);
             btnExplain.setAttribute('data-hash', question.hash);
+            if (mdq.isBootstrap()) {
+                btnExplain.classList.add('btn', 'btn-secondary');
+            }
             btnExplain.addEventListener('click', (evt) => {
                 let elExplain = document.querySelector('div.mdq-explanation[data-hash="' + question.hash + '"]');
                 if (elExplain) {
@@ -461,12 +509,19 @@ var mdq = {
             array[j] = temp;
         }
         return array;
+    },
+
+    /**
+     * Returns true if the theme is set to bootstrap5
+     */
+    isBootstrap: function () {
+        return mdq.config.theme == 'bootstrap5';
     }
 };/**
  * Functions for dealing with the CSS that this script uses
  */
 var mdqCSS = {
-    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}
+    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
 `,
 };
 
