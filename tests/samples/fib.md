@@ -13,5 +13,9 @@ They are ___(yellow)[] - What color are they?
 
 And they're still ___(Yellow)[case sensitive: 1, width:100px], but case sensitive this time
 
+Two ampersands ___(&&)[] was causing a problem today. 
+
+And some other special characters ___("'?&)[]
+
 ---explanation
 This is the explanation for the FIB question type

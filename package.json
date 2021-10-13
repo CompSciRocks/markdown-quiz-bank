@@ -1,6 +1,6 @@
 {
     "name": "javascript-markdown-quiz",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "devDependencies": {
         "grunt": "^1.4.1",
         "grunt-bump": "^0.8.0",

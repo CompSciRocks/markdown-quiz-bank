@@ -183,6 +183,11 @@ var mdq = {
         }
 
         var wrapper = document.createElement("div");
+
+        let topLink = document.createElement('a');
+        topLink.setAttribute('name', 'mdq-top');
+        wrapper.appendChild(topLink);
+
         wrapper.setAttribute('class', 'mdq-wrap ' + (mdq.config.theme == 'bootstrap5' ? 'container' : ''));
         mdq.loadedQuestions.forEach(question => {
             wrapper.appendChild(mdq.questionElement(question));
@@ -197,6 +202,14 @@ var mdq = {
             }
             reloadButton.innerHTML = mdq.config.lang.reload;
             reloadButton.addEventListener('click', evt => {
+                let parent = mdq.parentElement();
+                let anchor = document.createElement('a');
+                anchor.setAttribute('name', 'mdq-top');
+
+                parent.innerHTML = '';
+                parent.appendChild(anchor);
+
+                location.hash = '#mdq-top';
                 mdq.init(mdq.config);
             });
             reloadDiv.appendChild(reloadButton);
@@ -523,7 +536,17 @@ var mdq = {
      */
     isBootstrap: function () {
         return mdq.config.theme == 'bootstrap5';
-    }
+    },
+
+    parentElement: function () {
+        return mdq.config.parent ? document.getElementById(mdq.config.parent) : document.body;
+    },
+
+    decodeEntities: function (html) {
+        let txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    },
 };/**
  * Functions for dealing with the CSS that this script uses
  */
@@ -740,9 +763,9 @@ var mdqQuestions = {
                     correct = !!el.value.match(regex);
                 } else {
                     if (json.caseSensitive) {
-                        correct = el.value == el.getAttribute('data-c');
+                        correct = el.value == mdq.decodeEntities(el.getAttribute('data-c'));
                     } else {
-                        correct = el.value.toLowerCase() == el.getAttribute('data-c').toLowerCase();
+                        correct = el.value.toLowerCase() == mdq.decodeEntities(el.getAttribute('data-c')).toLowerCase();
                     }
                 }
 
