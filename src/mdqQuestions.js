@@ -208,9 +208,9 @@ var mdqQuestions = {
                     correct = !!el.value.match(regex);
                 } else {
                     if (json.caseSensitive) {
-                        correct = el.value == el.getAttribute('data-c');
+                        correct = el.value == mdq.decodeEntities(el.getAttribute('data-c'));
                     } else {
-                        correct = el.value.toLowerCase() == el.getAttribute('data-c').toLowerCase();
+                        correct = el.value.toLowerCase() == mdq.decodeEntities(el.getAttribute('data-c')).toLowerCase();
                     }
                 }
 

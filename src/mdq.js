@@ -540,5 +540,11 @@ var mdq = {
 
     parentElement: function () {
         return mdq.config.parent ? document.getElementById(mdq.config.parent) : document.body;
-    }
+    },
+
+    decodeEntities: function (html) {
+        let txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    },
 }

@@ -540,7 +540,13 @@ var mdq = {
 
     parentElement: function () {
         return mdq.config.parent ? document.getElementById(mdq.config.parent) : document.body;
-    }
+    },
+
+    decodeEntities: function (html) {
+        let txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    },
 };/**
  * Functions for dealing with the CSS that this script uses
  */
@@ -757,9 +763,9 @@ var mdqQuestions = {
                     correct = !!el.value.match(regex);
                 } else {
                     if (json.caseSensitive) {
-                        correct = el.value == el.getAttribute('data-c');
+                        correct = el.value == mdq.decodeEntities(el.getAttribute('data-c'));
                     } else {
-                        correct = el.value.toLowerCase() == el.getAttribute('data-c').toLowerCase();
+                        correct = el.value.toLowerCase() == mdq.decodeEntities(el.getAttribute('data-c')).toLowerCase();
                     }
                 }
 
