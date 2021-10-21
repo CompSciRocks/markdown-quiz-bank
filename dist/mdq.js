@@ -569,7 +569,7 @@ var mdqQuestions = {
     mcHTML: function (question) {
 
         let answers = question.sections.answers.split(/---[\t ]*\r?\n/);
-        let correct = question.frontMatter.answer ?? 1; // default to first
+        let correct = question.frontMatter.answer ?? '1'; // default to first
         if (correct.match(/^[A-Za-z]{1}$/)) {
             // Letter, convert it to a number
             correct = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(correct.toUpperCase()) + 1;
