@@ -438,6 +438,11 @@ var mdq = {
                 ret[this.toCamelCase(sp[0].trim())] = sp[1].trim();
             }
         });
+
+        if (typeof ret.answer === 'undefined' && typeof ret.ans !== 'undefined') {
+            ret.answer = ret.ans;
+        }
+
         return ret;
     },
 

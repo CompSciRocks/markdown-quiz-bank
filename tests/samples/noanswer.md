@@ -1,7 +1,8 @@
 ---
 type: MC
+ans: b
 ---
-The answer is A
+The answer is B
 
 ---answers
 A
