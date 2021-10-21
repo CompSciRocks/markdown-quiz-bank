@@ -283,6 +283,16 @@ var mdq = {
         div.setAttribute('data-hash', question.hash);
         div.setAttribute('id', question.hash);
 
+        let comment = [];
+        if (question.file) {
+            comment.push('file: ' + question.file);
+        }
+        if (question.frontMatter.title) {
+            comment.push('title: ' + question.frontMatter.title);
+        }
+        let commentNode = document.createComment(comment.join(', '));
+        div.appendChild(commentNode);
+
         let divContent = document.createElement('div');
         divContent.setAttribute('class', 'md-question-body');
         divContent.innerHTML = mdq.formatQuestion(question);
@@ -378,7 +388,7 @@ var mdq = {
             let response = await fetch(url);
             if (response.status >= 200 && response.status < 400) {
                 let data = await response.text();
-                this.loadedQuestions.push(this.fileInfo(data));
+                this.loadedQuestions.push(this.fileInfo(data, url));
             }
             if (this.loadedQuestions.length >= this.config.count) {
                 break;
@@ -391,12 +401,14 @@ var mdq = {
      * file that can be put into the loadedQuestions array. 
      * @param {*} fileContent 
      */
-    fileInfo: function (fileContent) {
+    fileInfo: function (fileContent, url) {
         fileContent = fileContent.trim();
         if (mdq.config.stripRaw) {
             fileContent = fileContent.replace(/{%\s*?(end)?raw\s*?%}/sg, '').trim();
         }
         let ret = {};
+
+        ret.file = url;
 
         // Strip out the raw / endraw lines that appear to be needed
         // when serving from a Jekyll generated site
@@ -438,6 +450,11 @@ var mdq = {
                 ret[this.toCamelCase(sp[0].trim())] = sp[1].trim();
             }
         });
+
+        if (typeof ret.answer === 'undefined' && typeof ret.ans !== 'undefined') {
+            ret.answer = ret.ans;
+        }
+
         return ret;
     },
 
