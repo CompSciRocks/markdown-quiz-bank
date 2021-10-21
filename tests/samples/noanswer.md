@@ -1,4 +1,5 @@
 ---
+title: A test question
 type: MC
 ans: b
 ---
