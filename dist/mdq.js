@@ -564,6 +564,22 @@ var mdq = {
         txt.innerHTML = html;
         return txt.value;
     },
+
+    /**
+     * Returns true if the value is "truthy"
+     * @param {*} val 
+     */
+    isTruthy: function (val) {
+        val = val | false;
+
+        if (typeof val === 'string') {
+            val = val.toLowerCase();
+        }
+        if (val == true || val == 'true' || val == '1') {
+            return true;
+        }
+        return false;
+    }
 };/**
  * Functions for dealing with the CSS that this script uses
  */
@@ -752,7 +768,7 @@ var mdqQuestions = {
 
     /**
      * Check a fill in the blank question
-     * @param {*} question 
+     * @param {*} question    
      */
     checkFIBQuestion: function (question) {
         let inputs = document.querySelectorAll('div.mdq-question[data-hash="' + question.hash + '"] input');
@@ -763,7 +779,15 @@ var mdqQuestions = {
                 // Don't add classes if there's not a value
                 let json = JSON.parse(el.getAttribute('data-opts'));
                 let correct = false;
-                if (json.regex) {
+
+                if (mdq.isTruthy(json.contains)) {
+                    if (!mdq.isTruthy(json.caseSensitive)) {
+                        correct = el.value.toLowerCase().indexOf(el.getAttribute('data-c').toLowerCase()) > -1;
+                    } else {
+                        correct = el.value.indexOf(el.getAttribute('data-c')) > -1;
+                    }
+                }
+                else if (mdq.isTruthy(json.regex)) {
                     let regexString = el.getAttribute('data-c');
 
                     // Get flags, if they're there
@@ -779,7 +803,7 @@ var mdqQuestions = {
                     //regex = regex.replace(/^\//, '').replace(/\/$/, '');
                     correct = !!el.value.match(regex);
                 } else {
-                    if (json.caseSensitive) {
+                    if (mdq.isTruthy(json.caseSensitive)) {
                         correct = el.value == mdq.decodeEntities(el.getAttribute('data-c'));
                     } else {
                         correct = el.value.toLowerCase() == mdq.decodeEntities(el.getAttribute('data-c')).toLowerCase();
