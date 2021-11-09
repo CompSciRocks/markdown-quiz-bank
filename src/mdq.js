@@ -564,4 +564,20 @@ var mdq = {
         txt.innerHTML = html;
         return txt.value;
     },
+
+    /**
+     * Returns true if the value is "truthy"
+     * @param {*} val 
+     */
+    isTruthy: function (val) {
+        val = val | false;
+
+        if (typeof val === 'string') {
+            val = val.toLowerCase();
+        }
+        if (val == true || val == 'true' || val == '1') {
+            return true;
+        }
+        return false;
+    }
 }

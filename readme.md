@@ -128,10 +128,11 @@ In the brackets you can add additional options, separated by commas. See the sec
 | Option         | Notes                                                        |
 | -------------- | ------------------------------------------------------------ |
 | Case Sensitive | If true then matching will be done in a case sensitive manner. For the second example above, Purple is correct but purple would not be considered correct. For the first example, it is not case sensitive so green, Green, or GrEeN would all be counted correct. |
+| contains       | If true then the answer must be contained in the answer. For the first example above, the answer must contain the word green. If false, or not used, it has to be an exact match. |
 | regex          | If true, the entered value will be compared using the value inside the parenthesis as a regular expression. For example, you could put `/^\d{3}$/` inside the parenthesis and it would match any 3 digit number. |
 | Width          | Width of the text field. Can be any unit that CSS understands - px, em, vw, etc. If you don't use this option the field is set to a default width. |
 
-
+Contains and regex are mutually exclusive. If you use both, contains will be used. 
 
 #### Dropdown Selection
 
