@@ -235,7 +235,7 @@ var mdq = {
         if (mdq.hasGroups()) {
             let groupButtons = document.createElement('div');
             groupButtons.classList.add('mdq-question-groups');
-            if (0 && mdq.isBootstrap()) {
+            if (mdq.isBootstrap()) {
                 // Button group
                 groupButtons.classList.add('mdq-button-group');
                 groupButtons.classList.add('btn-group')
@@ -706,7 +706,7 @@ var mdq = {
     },
 
     hasGroups: function () {
-        return typeof mdq.config.questions === 'object';
+        return typeof mdq.config.questions === 'object' && !Array.isArray(mdq.config.questions);
     },
 
     /**
