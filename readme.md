@@ -234,7 +234,28 @@ The config object can have the following properties. The only required property 
 | stripRaw        | true    | Strip out `{% raw %}` and `{% endraw %}` tags. This is probably only necessary if you're using a static site builder to host your files. GitHub pages does need this, and there's a bit more on that below. |
 | lang            |         | Language strings so you can customize to what you need. `correct`, `incorrect`, `check`, `help`, `true`, `false`, `reload` |
 
+### Question Groups
+If you set `questions` to an array like the example above, it'll use those files as the question bank.  You can also set it to an object, with the key the group name and the value an array of question files.
 
+```
+let config = {
+    questions: {
+        'Group 1': [
+            'q1.md', 
+            'q2.md', 
+            'q3.md',
+        ],
+        'Group 2': [
+            'q4.md', 
+            'q5.md', 
+            'q6.md',
+        ],
+    },
+    // other config options
+};
+```
+
+This will create two question groups that your students can pick from. They'll have buttons or checkboxes, depending on the theme, that they'll be able to select one or more groups to pull questions from. 
 
 ## GitHub Pages and Jekyll
 

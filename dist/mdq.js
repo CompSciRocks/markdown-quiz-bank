@@ -29,6 +29,18 @@ var mdq = {
     loadedQuestions: [],
 
     /**
+     * Container for all of the questions that can be loaded. This may
+     * be everything if the questions aren't in groups, or just questions
+     * from the selected groups. 
+     */
+    allQuestions: [],
+
+    /**
+     * Question groups that are currently selected. 
+     */
+    currentGroups: [],
+
+    /**
      * Stores the config option passed after normalizing so that it
      * can be accessed by all the methods. 
      */
@@ -62,13 +74,42 @@ var mdq = {
         this.config = { ...def, ...config };
 
         this.loadedQuestions = [];
+        this.allQuestions = [];
+
+        // Load questions, going in to groups if requested
+        if (Array.isArray(this.config.questions)) {
+            // Just load them all
+            this.allQuestions = this.config.questions;
+        } else if (typeof this.config.questions === 'object') {
+            // Object, need to parse and look for groups
+            let groups = Object.keys(this.config.questions);
+            if (this.currentGroups.length < 1) {
+                // Can't have zero groups, so default to all
+                this.currentGroups = groups;
+            }
+
+            // Go through and add questions for any selected groups
+            this.currentGroups.forEach(group => {
+                if (group in this.config.questions) {
+                    this.allQuestions = this.allQuestions.concat(this.config.questions[group]);
+                } else {
+                    console.error('Cannot find key ' + group + ' in questions');
+                }
+            });
+
+        }
+
+        if (this.allQuestions.length < 1) {
+            console.error('No questions found in config');
+            return;
+        }
 
         // Shuffle the questions
-        for (let i = this.config.questions.length - 1; i > 0; i--) {
+        for (let i = this.allQuestions.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            const temp = this.config.questions[i];
-            this.config.questions[i] = this.config.questions[j];
-            this.config.questions[j] = temp;
+            const temp = this.allQuestions[i];
+            this.allQuestions[i] = this.allQuestions[j];
+            this.allQuestions[j] = temp;
         }
 
         window.Prism = window.Prism || {};
@@ -189,6 +230,89 @@ var mdq = {
         wrapper.appendChild(topLink);
 
         wrapper.setAttribute('class', 'mdq-wrap ' + (mdq.config.theme == 'bootstrap5' ? 'container' : ''));
+
+        // Add buttons if there are question groups
+        if (mdq.hasGroups()) {
+            let groupButtons = document.createElement('div');
+            groupButtons.classList.add('mdq-question-groups');
+            if (mdq.isBootstrap()) {
+                // Button group
+                groupButtons.classList.add('mdq-button-group');
+                groupButtons.classList.add('btn-group')
+                mdq.groupList().forEach(group => {
+                    let b = document.createElement('button');
+                    b.classList.add('btn');
+                    b.classList.add('mdq-button');
+                    if (mdq.currentGroups.includes(group)) {
+                        b.classList.add('btn-primary');
+                        b.setAttribute('data-sel', 1);
+                    } else {
+                        b.classList.add('btn-outline-primary');
+                        b.setAttribute('data-sel', 0);
+                    }
+                    b.innerText = group;
+                    b.setAttribute('data-group', group);
+                    b.addEventListener('click', function (evt) {
+                        let currentlySelected = mdq.isTruthy(this.getAttribute('data-sel'));
+                        if (currentlySelected) {
+                            // Can only deselect if there's more than one selected
+                            let cnt = this.parentElement.querySelectorAll('button[data-sel="1"]').length;
+                            if (cnt > 1) {
+                                let idx = mdq.currentGroups.indexOf(this.getAttribute('data-group'));
+                                if (idx >= 0) {
+                                    mdq.currentGroups.splice(idx, 1);
+                                }
+                            } else {
+                                return; // Can't deselect the only one selected, and don't want it to refresh
+                            }
+                        } else {
+                            // Add it, doesn't matter how many are already selected
+                            mdq.currentGroups.push(this.getAttribute('data-group'));
+                        }
+                        mdq.init(mdq.config);
+                    });
+                    groupButtons.appendChild(b);
+                });
+            } else {
+                // Checkboxes
+                mdq.groupList().forEach(group => {
+                    let lbl = document.createElement('label');
+                    let cb = document.createElement('input');
+                    cb.setAttribute('type', 'checkbox');
+                    cb.setAttribute('data-group', group);
+                    cb.checked = mdq.currentGroups.includes(group);
+                    cb.addEventListener('change', function (evt) {
+                        let currentlySelected = this.checked;
+
+                        if (!currentlySelected) {
+                            let cnt = this.parentElement.parentElement.querySelectorAll('input[type="checkbox"]:checked').length;
+                            if (cnt < 1) {
+                                // Block deselect and update if it was the only one selected
+                                this.checked = true;
+                                return;
+                            }
+                            // Remove it from the list and refresh
+                            let idx = mdq.currentGroups.indexOf(this.getAttribute('data-group'));
+                            if (idx >= 0) {
+                                mdq.currentGroups.splice(idx, 1);
+                            }
+                        } else {
+                            // Add it, doesn't matter how many are already selected
+                            mdq.currentGroups.push(this.getAttribute('data-group'));
+                        }
+                        mdq.init(mdq.config);
+                    });
+
+                    let span = document.createElement('span');
+                    span.innerText = group;
+                    lbl.appendChild(cb);
+                    lbl.appendChild(span);
+                    groupButtons.appendChild(lbl);
+                });
+            }
+            wrapper.appendChild(groupButtons);
+        }
+
         mdq.loadedQuestions.forEach(question => {
             wrapper.appendChild(mdq.questionElement(question));
         });
@@ -384,7 +508,7 @@ var mdq = {
      * any needed remote CSS or JavaScript files. 
      */
     loadFiles: async function (idx) {
-        for (const url of this.config.questions) {
+        for (const url of this.allQuestions) {
             let response = await fetch(url);
             if (response.status >= 200 && response.status < 400) {
                 let data = await response.text();
@@ -579,12 +703,26 @@ var mdq = {
             return true;
         }
         return false;
+    },
+
+    hasGroups: function () {
+        return typeof mdq.config.questions === 'object' && !Array.isArray(mdq.config.questions);
+    },
+
+    /**
+     * Returns the names of groups, or an empty array if there are no groups
+     */
+    groupList: function () {
+        if (!mdq.hasGroups()) {
+            return [];
+        }
+        return Object.keys(mdq.config.questions);
     }
 };/**
  * Functions for dealing with the CSS that this script uses
  */
 var mdqCSS = {
-    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
+    cssContents: `div.mdq-wrap .mdq-question-groups{margin-top:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups label{padding-right:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups input[type="checkbox"]{margin-right:8px}div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
 `,
 };
 
