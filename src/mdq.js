@@ -234,7 +234,8 @@ var mdq = {
         // Add buttons if there are question groups
         if (mdq.hasGroups()) {
             let groupButtons = document.createElement('div');
-            if (mdq.isBootstrap()) {
+            groupButtons.classList.add('mdq-question-groups');
+            if (0 && mdq.isBootstrap()) {
                 // Button group
                 groupButtons.classList.add('mdq-button-group');
                 groupButtons.classList.add('btn-group')
@@ -274,7 +275,40 @@ var mdq = {
                 });
             } else {
                 // Checkboxes
-                console.error('not implemented');
+                mdq.groupList().forEach(group => {
+                    let lbl = document.createElement('label');
+                    let cb = document.createElement('input');
+                    cb.setAttribute('type', 'checkbox');
+                    cb.setAttribute('data-group', group);
+                    cb.checked = mdq.currentGroups.includes(group);
+                    cb.addEventListener('change', function (evt) {
+                        let currentlySelected = this.checked;
+
+                        if (!currentlySelected) {
+                            let cnt = this.parentElement.parentElement.querySelectorAll('input[type="checkbox"]:checked').length;
+                            if (cnt < 1) {
+                                // Block deselect and update if it was the only one selected
+                                this.checked = true;
+                                return;
+                            }
+                            // Remove it from the list and refresh
+                            let idx = mdq.currentGroups.indexOf(this.getAttribute('data-group'));
+                            if (idx >= 0) {
+                                mdq.currentGroups.splice(idx, 1);
+                            }
+                        } else {
+                            // Add it, doesn't matter how many are already selected
+                            mdq.currentGroups.push(this.getAttribute('data-group'));
+                        }
+                        mdq.init(mdq.config);
+                    });
+
+                    let span = document.createElement('span');
+                    span.innerText = group;
+                    lbl.appendChild(cb);
+                    lbl.appendChild(span);
+                    groupButtons.appendChild(lbl);
+                });
             }
             wrapper.appendChild(groupButtons);
         }

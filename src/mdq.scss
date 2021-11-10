@@ -1,4 +1,21 @@
 div.mdq-wrap {
+
+    .mdq-question-groups {
+        margin: {
+            top   : 16px;
+            bottom: 8px;
+        }
+
+        label {
+            padding-right: 16px;
+            margin-bottom: 8px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+    }
+
     .mdq-question {
         margin: {
             bottom: 48px;

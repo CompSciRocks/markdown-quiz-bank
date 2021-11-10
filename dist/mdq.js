@@ -234,7 +234,8 @@ var mdq = {
         // Add buttons if there are question groups
         if (mdq.hasGroups()) {
             let groupButtons = document.createElement('div');
-            if (mdq.isBootstrap()) {
+            groupButtons.classList.add('mdq-question-groups');
+            if (0 && mdq.isBootstrap()) {
                 // Button group
                 groupButtons.classList.add('mdq-button-group');
                 groupButtons.classList.add('btn-group')
@@ -274,7 +275,40 @@ var mdq = {
                 });
             } else {
                 // Checkboxes
-                console.error('not implemented');
+                mdq.groupList().forEach(group => {
+                    let lbl = document.createElement('label');
+                    let cb = document.createElement('input');
+                    cb.setAttribute('type', 'checkbox');
+                    cb.setAttribute('data-group', group);
+                    cb.checked = mdq.currentGroups.includes(group);
+                    cb.addEventListener('change', function (evt) {
+                        let currentlySelected = this.checked;
+
+                        if (!currentlySelected) {
+                            let cnt = this.parentElement.parentElement.querySelectorAll('input[type="checkbox"]:checked').length;
+                            if (cnt < 1) {
+                                // Block deselect and update if it was the only one selected
+                                this.checked = true;
+                                return;
+                            }
+                            // Remove it from the list and refresh
+                            let idx = mdq.currentGroups.indexOf(this.getAttribute('data-group'));
+                            if (idx >= 0) {
+                                mdq.currentGroups.splice(idx, 1);
+                            }
+                        } else {
+                            // Add it, doesn't matter how many are already selected
+                            mdq.currentGroups.push(this.getAttribute('data-group'));
+                        }
+                        mdq.init(mdq.config);
+                    });
+
+                    let span = document.createElement('span');
+                    span.innerText = group;
+                    lbl.appendChild(cb);
+                    lbl.appendChild(span);
+                    groupButtons.appendChild(lbl);
+                });
             }
             wrapper.appendChild(groupButtons);
         }
@@ -688,7 +722,7 @@ var mdq = {
  * Functions for dealing with the CSS that this script uses
  */
 var mdqCSS = {
-    cssContents: `div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
+    cssContents: `div.mdq-wrap .mdq-question-groups{margin-top:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups label{padding-right:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups input[type="checkbox"]{margin-right:8px}div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
 `,
 };
 
