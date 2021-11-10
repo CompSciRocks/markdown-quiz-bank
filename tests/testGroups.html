@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Markdown Quiz Test</title>
+    <script src="../dist/mdq.js"></script>
+</head>
+
+<body>
+    <div id="questions">
+
+    </div>
+    <script>
+        mdq.init({
+            'questions': {
+                "First Set": [
+                    'samples/contains.md',
+                    'samples/external.md'
+                ], "Second Set": [
+                    'samples/fib.md',
+                    'samples/mc1.md',
+                    'samples/mcJava.md'
+                ]
+            }, 'theme': 'bootstrap5',
+        });
+    </script>
+</body>
+
+</html>
