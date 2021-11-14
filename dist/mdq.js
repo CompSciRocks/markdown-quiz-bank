@@ -86,8 +86,6 @@ class MDQ {
             throw new Error('Invalid parent element.');
         }
 
-        console.info(this.parentElement);
-
         if (this.config.autoStart) {
             this.init();
         }
@@ -139,7 +137,6 @@ class MDQ {
         Prism.manual = true;
         await this.loadFiles();
         this.loadScripts(this.getScripts(), this.buildPage.bind(this));
-        console.info(this);
     }
 
     /**
@@ -473,9 +470,10 @@ class MDQQuestion {
             div.appendChild(this._elementMC());
             qType = 'MC';
         } else if (this.isTF()) {
-            return this._elementTF(theme);
+            div.appendChild(this._elementTF());
+            qType = 'TF';
         } else if (this.isFIB()) {
-            return this._elementFIB(theme);
+            return this._elementFIB();
         } else {
             throw new Error("Unknown question type");
         }
@@ -620,7 +618,44 @@ class MDQQuestion {
     }
 
     _elementTF() {
+        let answer = this.getProperty('answer') ?? 't';
+        answer = answer.match(/^f.*/i) ? 'F' : 'T'; // Unless specifically false, it's true
 
+        let div = document.createElement('div');
+        let sel = document.createElement('select');
+        sel.setAttribute('data-hash', this.hash);
+        sel.setAttribute('data-c', answer);
+        if (this.useBootstrap()) {
+            sel.classList.add('form-select');
+        }
+
+        let optTrue = document.createElement('option');
+        optTrue.innerHTML = this.config.lang.true;
+        optTrue.value = 'T';
+        sel.appendChild(optTrue);
+
+        let optFalse = document.createElement('option');
+        optFalse.innerHTML = this.config.lang.false;
+        optFalse.value = 'F';
+        sel.appendChild(optFalse);
+
+        // Start without either selected
+        sel.value = -1;
+
+        sel.addEventListener('change', (evt) => {
+            document.querySelector('button[data-hash="' + this.hash + '"][data-type="TF"]').disabled = false;
+            document.querySelector('span[data-result][data-hash="' + this.hash + '"]').innerHTML = '';
+        });
+        div.appendChild(sel);
+
+        let resultSpan = document.createElement('span');
+        resultSpan.classList.add('mdq-tf-result');
+        resultSpan.setAttribute('data-hash', this.hash);
+        resultSpan.setAttribute('data-result', 1);
+        resultSpan.innerHTML = '';
+        div.appendChild(resultSpan);
+
+        return div;
     }
 
     _elementFIB() {
@@ -660,7 +695,21 @@ class MDQQuestion {
     }
 
     _checkAnswerTF() {
+        // Clear out the results span in case this isn't the first time
+        let resultSpan = document.querySelector('span[data-result][data-hash="' + this.hash + '"]');
+        resultSpan.classList.remove('correct', 'incorrect');
+        resultSpan.innerHTML = '';
 
+        let sel = document.querySelector('select[data-hash="' + this.hash + '"]');
+        if (sel.value == sel.getAttribute('data-c')) {
+            // Correct
+            resultSpan.classList.add('correct');
+            resultSpan.innerHTML = this.config.lang.correct;
+        } else {
+            // Incorrect
+            resultSpan.classList.add('incorrect');
+            resultSpan.innerHTML = this.config.lang.incorrect;
+        }
     }
 
     _checkAnswerFIB() {

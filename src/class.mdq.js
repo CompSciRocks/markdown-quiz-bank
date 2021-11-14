@@ -86,8 +86,6 @@ class MDQ {
             throw new Error('Invalid parent element.');
         }
 
-        console.info(this.parentElement);
-
         if (this.config.autoStart) {
             this.init();
         }
@@ -139,7 +137,6 @@ class MDQ {
         Prism.manual = true;
         await this.loadFiles();
         this.loadScripts(this.getScripts(), this.buildPage.bind(this));
-        console.info(this);
     }
 
     /**
