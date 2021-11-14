@@ -7,15 +7,24 @@
 </head>
 
 <body>
+    <h2>Questions</h2>
     <div id="questions">
 
     </div>
+    <p>And, something under the questions.</p>
     <script>
-        mdq.init({
-            'questions': [
-                'samples/contains.md',
+        let mdq = new MDQ({
+            parent: '#questions',
+            questions: [
+                //'samples/contains.md',
+                'samples/mc1.md',
             ], 'theme': 'bootstrap5',
         });
+        // mdq.init({
+        //     'questions': [
+        //         'samples/contains.md',
+        //     ], 'theme': 'bootstrap5',
+        // });
     </script>
 </body>
 
