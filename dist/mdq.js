@@ -367,7 +367,9 @@ class MDQ {
             newDiv.innerHTML = el.innerHTML;
             el.parentElement.replaceChild(newDiv, el);
         });
-        mermaid.init({}, this.parentElement.querySelectorAll('div.mermaid'));
+        if (typeof mermaid !== 'undefined') {
+            mermaid.init({}, this.parentElement.querySelectorAll('div.mermaid'));
+        }
 
         if (typeof MathJax !== 'undefined' && MathJax.typeset) {
             MathJax.typeset();
