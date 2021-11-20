@@ -39,6 +39,12 @@ class MDQ {
     parentElement = null;
 
     /**
+     * Used to identify this particular set of questions so there can be multiple
+     * on the same page. 
+     */
+    hash = null;
+
+    /**
      * Get everything setup and initialize the page. 
      * @param {*} config 
      */
@@ -85,6 +91,8 @@ class MDQ {
         } else {
             throw new Error('Invalid parent element.');
         }
+
+        this.hash = Math.random().toString(36).slice(-10);
 
         if (this.config.autoStart) {
             this.init();
@@ -146,6 +154,7 @@ class MDQ {
      * any needed remote CSS or JavaScript files. 
      */
     async loadFiles() {
+        this.loadedQuestions = [];
         for (const url of this.allQuestions) {
             let response = await fetch(url);
             if (response.status >= 200 && response.status < 400) {
@@ -283,9 +292,8 @@ class MDQ {
         }
 
         var wrapper = document.createElement("div");
-
         let topLink = document.createElement('a');
-        topLink.setAttribute('name', 'mdq-top');
+        topLink.setAttribute('name', 'mdq-top-' + this.hash);
         wrapper.appendChild(topLink);
 
         wrapper.setAttribute('class', 'mdq-wrap ' + (this.config.theme == 'bootstrap5' ? 'container' : ''));
@@ -305,15 +313,9 @@ class MDQ {
             }
             reloadButton.innerHTML = mdq.config.lang.reload;
             reloadButton.addEventListener('click', evt => {
-                let parent = mdq.parentElement();
-                let anchor = document.createElement('a');
-                anchor.setAttribute('name', 'mdq-top');
 
-                parent.innerHTML = '';
-                parent.appendChild(anchor);
-
-                location.hash = '#mdq-top';
                 this.init(this.config);
+                location.hash = '#mdq-top-' + this.hash;
             });
             reloadDiv.appendChild(reloadButton);
             wrapper.appendChild(reloadDiv);
@@ -348,6 +350,7 @@ class MDQ {
                 this.parentElement.querySelector('button[data-hash="' + hash + '"]').disabled = false;
             });
         });
+
     }
 
     /**
