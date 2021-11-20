@@ -303,6 +303,7 @@ class MDQ {
         }
 
         var wrapper = document.createElement("div");
+        wrapper.classList.add('mdq-wrap');
         let topLink = document.createElement('a');
         topLink.setAttribute('name', 'mdq-top-' + this.hash);
         wrapper.appendChild(topLink);
