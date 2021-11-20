@@ -1,3 +1,7 @@
+var mermaid_config = {
+    startOnLoad: false
+};
+
 class MDQ {
 
     /**
@@ -353,6 +357,25 @@ class MDQ {
                 this.parentElement.querySelector('button[data-hash="' + hash + '"]').disabled = false;
             });
         });
+
+        // Fix mermaid elements
+        let mermaidPre = this.parentElement.querySelectorAll('pre code.language-mermaid');
+        mermaidPre.forEach(el => {
+            let parent = el.parentElement;
+            let newDiv = document.createElement('div');
+            newDiv.classList.add('mermaid');
+            newDiv.innerHTML = el.innerHTML;
+            el.parentElement.replaceChild(newDiv, el);
+        });
+        mermaid.init({}, this.parentElement.querySelectorAll('div.mermaid'));
+
+        if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+            MathJax.typeset();
+        }
+
+        if (Prism.highlightAll) {
+            Prism.highlightAll(this.parentElement);
+        }
 
     }
 
