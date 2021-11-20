@@ -6,7 +6,7 @@ module.exports = function (grunt) {
             options: {
                 separator: ';',
             }, dist: {
-                src: ['src/*.js'],
+                src: ['src/class.mdq.js', 'src/class.question.js'],
                 dest: 'dist/mdq.js',
             },
         },
@@ -31,7 +31,7 @@ module.exports = function (grunt) {
         notify: {
             default: {
                 options: {
-                    title: '<%= pkg.name %>',
+                    title: '<%= pkg.name %> - <%= pkg.version %>',
                     message: 'JS and CSS compiled and saved to dist folder',
                 }
             }

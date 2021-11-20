@@ -5,6 +5,8 @@
 var mermaid_config = {
     startOnLoad: false
 };
+
+
 var mdq = {
 
     /**
