@@ -485,21 +485,22 @@ class MDQQuestion {
      * Is this tagged as a multiple choice question in front matter
      */
     isMC() {
-        return this.getProperty('type').toLowerCase() == 'mc';
+        // Multiple choice is default if it's left off
+        return this.getProperty('type', 'mc').toLowerCase() == 'mc';
     }
 
     /**
      * Is this tagged as a true / false question in front matter
      */
     isTF() {
-        return this.getProperty('type').toLowerCase() == 'tf';
+        return this.getProperty('type', '').toLowerCase() == 'tf';
     }
 
     /**
      * Is this tagged as a fill in the blank question in the front matter
      */
     isFIB() {
-        return this.getProperty('type').toLowerCase() == 'fib';
+        return this.getProperty('type', '').toLowerCase() == 'fib';
     }
 
     useBootstrap() {
@@ -510,8 +511,8 @@ class MDQQuestion {
      * Get a specific property from the front matter
      * @param {*} property 
      */
-    getProperty(property) {
-        return this.properties[property];
+    getProperty(property, defaultValue) {
+        return this.properties[property] ?? defaultValue;
     }
 
     /**

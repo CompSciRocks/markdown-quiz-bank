@@ -298,7 +298,9 @@ class MDQ {
 
         wrapper.setAttribute('class', 'mdq-wrap ' + (this.config.theme == 'bootstrap5' ? 'container' : ''));
 
-        // @todo add buttons for question groups
+        if (this.hasGroups()) {
+            wrapper.appendChild(this._elementButtons());
+        }
 
         this.loadedQuestions.forEach(question => {
             wrapper.appendChild(question.element(this.config.theme));
@@ -351,6 +353,89 @@ class MDQ {
             });
         });
 
+    }
+
+    /**
+     * Returns a DOM element containing the buttons to switch between groups
+     */
+    _elementButtons() {
+        let groupButtons = document.createElement('div');
+        groupButtons.classList.add('mdq-question-groups');
+        if (this.isBootstrap()) {
+            // Bootstrap button group
+            groupButtons.classList.add('btn-group', 'mdq-button-group');
+            this.groupList().forEach(group => {
+                let b = document.createElement('button');
+                b.classList.add('btn', 'mdq-button');
+                if (this.currentGroups.includes(group)) {
+                    b.classList.add('btn-primary');
+                    b.setAttribute('data-sel', 1);
+                } else {
+                    b.classList.add('btn-outline-primary');
+                    b.setAttribute('data-sel', 0);
+                }
+                b.innerText = group;
+                b.setAttribute('data-group', group);
+                b.addEventListener('click', evt => {
+                    let btn = evt.target;
+                    let currentlySelected = MDQ.isTruthy(btn.getAttribute('data-sel'));
+                    if (currentlySelected) {
+                        // Can only deselect if there's more than one selected
+                        let cnt = btn.parentElement.querySelectorAll('button[data-sel="1"]').length;
+                        if (cnt > 1) {
+                            let idx = this.currentGroups.indexOf(btn.getAttribute('data-group'));
+                            if (idx >= 0) {
+                                this.currentGroups.splice(idx, 1);
+                            }
+                        } else {
+                            return; // Can't deselect the only one selected and don't want to refresh
+                        }
+                    } else {
+                        // Add it, doesn't matter the number selected
+                        this.currentGroups.push(btn.getAttribute('data-group'));
+                    }
+                    this.init(this.config);
+                });
+                groupButtons.appendChild(b);
+            });
+        } else {
+            // Checkboxes 
+            this.groupList().forEach(group => {
+                let lbl = document.createElement('label');
+                let cb = document.createElement('input');
+                cb.setAttribute('type', 'checkbox');
+                cb.setAttribute('data-group', group);
+                cb.checked = mdq.currentGroups.includes(group);
+                cb.addEventListener('change', function (evt) {
+                    let currentlySelected = this.checked;
+
+                    if (!currentlySelected) {
+                        let cnt = this.parentElement.parentElement.querySelectorAll('input[type="checkbox"]:checked').length;
+                        if (cnt < 1) {
+                            // Block deselect and update if it was the only one selected
+                            this.checked = true;
+                            return;
+                        }
+                        // Remove it from the list and refresh
+                        let idx = mdq.currentGroups.indexOf(this.getAttribute('data-group'));
+                        if (idx >= 0) {
+                            mdq.currentGroups.splice(idx, 1);
+                        }
+                    } else {
+                        // Add it, doesn't matter how many are already selected
+                        mdq.currentGroups.push(this.getAttribute('data-group'));
+                    }
+                    mdq.init(mdq.config);
+                });
+
+                let span = document.createElement('span');
+                span.innerText = group;
+                lbl.appendChild(cb);
+                lbl.appendChild(span);
+                groupButtons.appendChild(lbl);
+            });
+        }
+        return groupButtons;
     }
 
     /**
@@ -425,6 +510,20 @@ class MDQ {
             array[j] = temp;
         }
         return array;
+    }
+
+    hasGroups() {
+        return typeof this.config.questions === 'object' && !Array.isArray(this.config.questions);
+    }
+
+    /**
+     * Returns the names of groups, or an empty array if there are no groups
+     */
+    groupList() {
+        if (!this.hasGroups()) {
+            return [];
+        }
+        return Object.keys(this.config.questions);
     }
 };/**
  * Container for a single question that's been loaded 
@@ -913,21 +1012,22 @@ class MDQQuestion {
      * Is this tagged as a multiple choice question in front matter
      */
     isMC() {
-        return this.getProperty('type').toLowerCase() == 'mc';
+        // Multiple choice is default if it's left off
+        return this.getProperty('type', 'mc').toLowerCase() == 'mc';
     }
 
     /**
      * Is this tagged as a true / false question in front matter
      */
     isTF() {
-        return this.getProperty('type').toLowerCase() == 'tf';
+        return this.getProperty('type', '').toLowerCase() == 'tf';
     }
 
     /**
      * Is this tagged as a fill in the blank question in the front matter
      */
     isFIB() {
-        return this.getProperty('type').toLowerCase() == 'fib';
+        return this.getProperty('type', '').toLowerCase() == 'fib';
     }
 
     useBootstrap() {
@@ -938,8 +1038,8 @@ class MDQQuestion {
      * Get a specific property from the front matter
      * @param {*} property 
      */
-    getProperty(property) {
-        return this.properties[property];
+    getProperty(property, defaultValue) {
+        return this.properties[property] ?? defaultValue;
     }
 
     /**
