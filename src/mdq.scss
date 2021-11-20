@@ -16,6 +16,29 @@ div.mdq-wrap {
         }
     }
 
+    .mdq-question-wrap {
+
+        padding: {
+            top   : 16px;
+            bottom: 48px;
+        }
+
+        border-bottom: 1px solid silver;
+
+        &:last-child {
+            border-bottom: 1px solid transparent;
+        }
+    }
+
+    // >div>.mdq-question {
+
+    //     border-top: 1px solid silver;
+
+    //     &:first-child {
+    //         border-top: none;
+    //     }
+    // }
+
     .mdq-question {
         margin: {
             bottom: 48px;
@@ -25,11 +48,6 @@ div.mdq-wrap {
             top: 16px;
         }
 
-        border-top: 1px solid silver;
-
-        &:first-child {
-            border-top: none;
-        }
 
         input,
         select {

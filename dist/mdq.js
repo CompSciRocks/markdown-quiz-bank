@@ -303,6 +303,7 @@ class MDQ {
         }
 
         var wrapper = document.createElement("div");
+        wrapper.classList.add('mdq-wrap');
         let topLink = document.createElement('a');
         topLink.setAttribute('name', 'mdq-top-' + this.hash);
         wrapper.appendChild(topLink);
@@ -511,7 +512,7 @@ class MDQ {
      * @returns 
      */
     CSSContents() {
-        return `div.mdq-wrap .mdq-question-groups{margin-top:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups label{padding-right:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups input[type="checkbox"]{margin-right:8px}div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px;border-top:1px solid silver}div.mdq-wrap .mdq-question:first-child{border-top:none}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
+        return `div.mdq-wrap .mdq-question-groups{margin-top:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups label{padding-right:16px;margin-bottom:8px}div.mdq-wrap .mdq-question-groups input[type="checkbox"]{margin-right:8px}div.mdq-wrap .mdq-question-wrap{padding-top:16px;padding-bottom:48px;border-bottom:1px solid silver}div.mdq-wrap .mdq-question-wrap:last-child{border-bottom:1px solid transparent}div.mdq-wrap .mdq-question{margin-bottom:48px;padding-top:16px}div.mdq-wrap .mdq-question input.correct,div.mdq-wrap .mdq-question select.correct{background-color:#ccffcc !important}div.mdq-wrap .mdq-question input.incorrect,div.mdq-wrap .mdq-question select.incorrect{background-color:#ffc2b3 !important}div.mdq-wrap .mdq-mc-grid{display:grid;grid-template-columns:min-content 1fr;cursor:pointer;padding-top:16px}div.mdq-wrap .mdq-mc-grid>div{padding-right:16px}div.mdq-wrap .mdq-mc-grid>div.sel{background:#eee}div.mdq-wrap .mdq-mc-grid>div.correct{background:#ccffcc}div.mdq-wrap .mdq-mc-grid>div.incorrect{background:#ffc2b3}div.mdq-wrap .mdq-buttons button{margin-right:16px;margin-top:16px}div.mdq-wrap .mdq-explanation{margin-top:16px}div.mdq-wrap .form-select,div.mdq-wrap .form-control{width:auto;display:inline !important}div.mdq-wrap .mdq-tf-result{margin-left:16px}div.mdq-wrap .mdq-tf-result.correct{color:green}div.mdq-wrap .mdq-tf-result.incorrect{color:red}div.mdq-wrap .mdq-credit{padding-top:32px;padding-bottom:16px}div.mdq-wrap .mdq-credit a{text-decoration:none}div.mdq-wrap .mdq-credit a:hover{text-decoration:underline}div.mdq-wrap .mdq-reload{margin-top:16px;margin-bottom:16px}
 `;
     }
 
@@ -638,6 +639,7 @@ class MDQQuestion {
 
         let div = document.createElement('div');
         div.setAttribute('data-hash', this.hash);
+        div.classList.add('mdq-question-wrap');
 
         let divContent = document.createElement('div');
         divContent.classList.add('mdq-question');

@@ -79,6 +79,7 @@ class MDQQuestion {
 
         let div = document.createElement('div');
         div.setAttribute('data-hash', this.hash);
+        div.classList.add('mdq-question-wrap');
 
         let divContent = document.createElement('div');
         divContent.classList.add('mdq-question');
