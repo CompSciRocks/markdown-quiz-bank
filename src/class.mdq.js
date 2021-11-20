@@ -313,7 +313,7 @@ class MDQ {
                 parent.appendChild(anchor);
 
                 location.hash = '#mdq-top';
-                this.init(mdq.config);
+                this.init(this.config);
             });
             reloadDiv.appendChild(reloadButton);
             wrapper.appendChild(reloadDiv);
@@ -330,6 +330,24 @@ class MDQ {
         this.parentElement.innerHTML = '';
 
         this.parentElement.appendChild(wrapper);
+
+        // Attach event handlers to clear the styling from FIB inputs and selects as
+        // they change. The styling is added by the check button for this element. 
+        this.parentElement.querySelectorAll('input[data-type="fib"]').forEach(input => {
+            input.addEventListener('keydown', evt => {
+                let hash = evt.target.getAttribute('data-hash');
+                evt.target.classList.remove('correct', 'incorrect');
+                this.parentElement.querySelector('button[data-hash="' + hash + '"]').disabled = false;
+            });
+        });
+        this.parentElement.querySelectorAll('select[data-type="sel"]').forEach(input => {
+            input.selectedIndex = -1;
+            input.addEventListener('change', evt => {
+                let hash = evt.target.getAttribute('data-hash');
+                evt.target.classList.remove('correct', 'incorrect');
+                this.parentElement.querySelector('button[data-hash="' + hash + '"]').disabled = false;
+            });
+        });
     }
 
     /**
@@ -344,6 +362,29 @@ class MDQ {
             .replace(/\s/g, '')
             .replace(/^(.)/, function ($1) { return $1.toLowerCase(); });
     }
+
+    /**
+     * Returns true if the value is "truthy"
+     * @param {*} val 
+     */
+    static isTruthy(val) {
+        val = val | false;
+
+        if (typeof val === 'string') {
+            val = val.toLowerCase();
+        }
+        if (val == true || val == 'true' || val == '1') {
+            return true;
+        }
+        return false;
+    }
+
+    static decodeEntities(html) {
+        let txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    }
+
     /**
      * CSS that will optionally be inserted on to page. This is replaced in the dist 
      * version of this script with SCSS from mdq.scss prior to minification. 

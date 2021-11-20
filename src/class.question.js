@@ -32,6 +32,10 @@ class MDQQuestion {
         this.url = url;
         this.config = config;
 
+        // Strip out the {% raw %} tags. They're not needed for this script.
+        fileContents = fileContents.replace(/^\s*{%\s*raw\s*%}\s*/, '');
+        fileContents = fileContents.replace(/\s*{%\s*endraw\s*%}\s*$/, '');
+
         // Need a randomish identifier for later
         this.hash = Math.random().toString(36).slice(-10);
 
@@ -62,8 +66,7 @@ class MDQQuestion {
     formatted() {
         let parsed = marked(this.markdown);
         if (this.isFIB()) {
-            console.error('Need to parse FIB fields');
-            // parsed = mdqQuestions.parseFields(parsed, question);
+            parsed = this._formatFIB(parsed);
         }
         return parsed;
     }
@@ -78,6 +81,8 @@ class MDQQuestion {
         div.setAttribute('data-hash', this.hash);
 
         let divContent = document.createElement('div');
+        divContent.classList.add('mdq-question');
+        divContent.setAttribute('data-hash', this.hash);
         divContent.innerHTML = this.formatted();
         div.appendChild(divContent);
 
@@ -89,7 +94,10 @@ class MDQQuestion {
             div.appendChild(this._elementTF());
             qType = 'TF';
         } else if (this.isFIB()) {
-            return this._elementFIB();
+            // Not pulling another method to build the HTML for this, since
+            // the blanks are embedded in the question. Just needs to add
+            // event handlers to the elements. 
+            qType = 'FIB';
         } else {
             throw new Error("Unknown question type");
         }
@@ -140,6 +148,20 @@ class MDQQuestion {
 
         return div;
 
+    }
+
+    /**
+     * Set the event handlers on the FIB question so that it'll work.
+     * 
+     * This is done differently than the MC and TF since FIB blanks and
+     * dropdowns are in the question body instead of after the question
+     * text. 
+     */
+    _setupFIB(contentDiv) {
+        console.info(contentDiv);
+        let blanks = contentDiv.querySelectorAll('input[type="text"][data-type="fib"]');
+        console.info(blanks);
+        console.info(contentDiv.querySelectorAll('div[data-hash="' + this.hash + '"]'));
     }
 
     /**
@@ -274,8 +296,85 @@ class MDQQuestion {
         return div;
     }
 
-    _elementFIB() {
-        console.info('building FIB');
+    /**
+     * Parse the matched options string into a dictionary  
+     * @param {*} optString 
+     * @returns 
+     */
+    _parseFIBOptions(optsString) {
+        let opts = optsString.split(/\s*?,\s*?/);
+        let optDictionary = {};
+        opts.forEach(opt => {
+            let split = opt.split(/\s*?:\s*?/);
+            if (split[0] !== undefined && split[1] !== undefined) {
+                optDictionary[MDQ.toCamelCase(split[0].trim())] = split[1].trim();
+            }
+        });
+        return optDictionary;
+    }
+
+    /**
+     * Convert the FIB placeholders into text inputs or
+     * dropdowns. 
+     * 
+     * @param {*} content 
+     */
+    _formatFIB(content) {
+        // Text input fields 
+        content = content.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
+            opts = this._parseFIBOptions(opts);
+
+            let input = document.createElement('input');
+            input.setAttribute('data-type', 'fib');
+            input.setAttribute('data-hash', this.hash);
+            input.setAttribute('data-c', correct);
+            if (this.useBootstrap()) {
+                input.classList.add('form-control');
+            }
+            if (opts.width !== undefined) {
+                input.style.width = opts.width;
+            }
+
+            input.setAttribute('data-opts', JSON.stringify(opts));
+
+            return input.outerHTML;
+        });
+
+        // Dropdowns
+        content = content.replace(/___{(.*?)}\[(.*?)]/g, (match, values, opts) => {
+            opts = this._parseFIBOptions(opts);
+
+            let sel = document.createElement('select');
+            sel.setAttribute('data-hash', this.hash);
+            sel.setAttribute('data-type', 'sel');
+            if (this.useBootstrap()) {
+                sel.classList.add('form-select');
+            }
+
+            let valRay = values.split(/\s*?\|\s*?/);
+            let optRay = []; // Put into array so we can shuffle if requested
+            valRay.forEach(el => {
+                let isCorrect = !!el.match(/^\+:/);
+                el = el.replace(/^(\+|\-):/, '');
+
+                let newOpt = document.createElement('option');
+                newOpt.setAttribute('data-c', isCorrect ? 1 : 0);
+                newOpt.value = el;
+                newOpt.innerHTML = el;
+                optRay.push(newOpt);
+            });
+
+            if (opts.shuffle && (opts.shuffle == '1' || opts.shuffle.match(/^(t|y)/i))) {
+                optRay = mdq.shuffle(optRay);
+            }
+
+            optRay.forEach(opt => {
+                sel.appendChild(opt);
+            });
+
+            return sel.outerHTML;
+        });
+        return content;
     }
 
     checkAnswer() {
@@ -329,7 +428,57 @@ class MDQQuestion {
     }
 
     _checkAnswerFIB() {
+        let questionDiv = document.querySelector('div.mdq-question[data-hash="' + this.hash + '"]');
+        questionDiv.querySelectorAll('input[data-type="fib"]').forEach(input => {
+            input.classList.remove('correct', 'incorrect');
+            let val = MDQ.decodeEntities(input.value.trim());
 
+            if (val != '') {
+                // We only care if there's actually a value
+                let json = JSON.parse(input.getAttribute('data-opts'));
+                let correct = false;
+                let correctValue = input.getAttribute('data-c');
+
+                if (MDQ.isTruthy(json.contains)) {
+                    // Correct if it contains the key value
+                    if (MDQ.isTruthy(json.caseSensitive)) {
+                        correct = val.toLowerCase().indexOf(correctValue.toLowerCase()) > -1;
+                    } else {
+                        correct = val.indexOf(correctValue) > -1;
+                    }
+                } else if (MDQ.isTruthy(json.regex)) {
+                    // Use regex
+                    let flags = '';
+                    let flagMatch = correctValue.replace(/^\//, '').match(/\/([gimy]*)$/);
+                    if (flagMatch) {
+                        flags = flagMatch[1];
+                    }
+                    // Clear off regex delimiters
+                    regexString = correctValue.replace(/^\//, '').replace(/\/[gimy]*$/, '');
+
+                    let regex = new RegExp(regexString, flags);
+                    correct = !!val.match(regex);
+                } else {
+                    // Generic match
+                    if (MDQ.isTruthy(json.caseSensitive)) {
+                        correct = val == correctValue;
+                    } else {
+                        correct = val.toLowerCase() == correctValue.toLowerCase();
+                    }
+                }
+
+                input.classList.add(correct ? 'correct' : 'incorrect');
+            }
+        });
+        questionDiv.querySelectorAll('select[data-type="sel"]').forEach(input => {
+            input.classList.remove('correct', 'incorrect');
+            let selIndex = input.selectedIndex;
+            if (selIndex >= 0) {
+                // Only worry if they've actually selected something
+                let sel = input.options[selIndex];
+                input.classList.add(sel.getAttribute('data-c') == 1 ? 'correct' : 'incorrect');
+            }
+        });
     }
 
     /**
