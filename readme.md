@@ -165,6 +165,41 @@ Yes, the sky is blue
 
 If there is an explanation there will be a `Help` button next to the `Check` button for the question. After the student makes a selection and checks it the Help button is enabled. When clicked, it'll display the text you've entered under the explanation heading. 
 
+## Mermaid, MathJax, & Prism
+MDQ will load JavaScript and CSS for Mermaid, MathJax & Prism if you use them in a question, but only if needed. 
+
+### Mermaid
+````
+```mermaid
+graph LR
+    A --> B
+```
+````
+
+Anything entered into a mermaid code block will be rendered using MermaidJS. 
+
+
+
+### MathJax
+
+```
+$$ a^2 + b^2 = c^2$$
+```
+
+
+
+### Prism
+
+````
+```java
+public static void main(String[] args) {
+
+}
+```
+````
+
+
+
 ## Installation 
 
 Now that you have some files, it's time to build the HTML page for your quiz. 
@@ -188,11 +223,11 @@ You'll also need to initialize the script. Somewhere in your file, probably towa
 ```html
 <script>
 	let config = {}; // more on this in a bit
-	mdq.init(config);
+	new MDQ(config);
 </script>
 ```
 
-
+You can have multiple `new MDQ({})` calls in your file, as long as the `parent` property in `config` is different. 
 
 ### Config Format
 
@@ -202,7 +237,7 @@ You will need to create a config variable to pass to `init`. At minimum it needs
 <script>
 let config = {
     count: 5, 
-    parent: 'elementId',
+    parent: '#elementId',
     lang: {
         check: 'Check',             // Check button text
         correct: 'Correct',         // Label for a question that's checked and correct
@@ -215,7 +250,7 @@ let config = {
     ],
     style: 'bootstrap5',
 };
-mdq.init(config);
+new MDQ(config);
 </script>
 ```
 
@@ -224,7 +259,7 @@ The config object can have the following properties. The only required property 
 | Property        | Default | Notes                                                        |
 | --------------- | ------- | ------------------------------------------------------------ |
 | count           | 5       | Maximum number of questions to load.                         |
-| parent          | <none>  | The parent element to fill with the quiz. If blank, `document.body` is used. Can also be an element id. |
+| parent          | <none>  | The parent element to fill with the quiz. If blank, `document.body` is used. It can be either a string or an element. If it's a string, then that string is used as a query selector to find an element.  |
 | questions       | []      | Array of question files to consider when displaying. These will be randomly loaded, up to the number set in `count`. They can be filenames if they're in the same folder as your HTML file or full URLs if they're located somewhere else. |
 | style           | <none>  | Style to use when building the quiz. Currently, only `bootstrap5` is available. |
 | css             | true    | If true, additional CSS will be inserted into the page to make the quiz look better. If false, it's not so you'll probably want to include the styles in your CSS files. |
