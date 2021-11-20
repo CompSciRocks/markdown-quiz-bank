@@ -441,7 +441,7 @@ class MDQQuestion {
 
                 if (MDQ.isTruthy(json.contains)) {
                     // Correct if it contains the key value
-                    if (MDQ.isTruthy(json.caseSensitive)) {
+                    if (!MDQ.isTruthy(json.caseSensitive)) {
                         correct = val.toLowerCase().indexOf(correctValue.toLowerCase()) > -1;
                     } else {
                         correct = val.indexOf(correctValue) > -1;

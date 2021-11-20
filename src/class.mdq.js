@@ -2,6 +2,12 @@ var mermaid_config = {
     startOnLoad: false
 };
 
+var mdq = {
+    init: function (config) {
+        new MDQ(config);
+    }
+}
+
 class MDQ {
 
     /**
@@ -318,7 +324,7 @@ class MDQ {
             if (this.isBootstrap()) {
                 reloadButton.classList.add('btn', 'btn-primary');
             }
-            reloadButton.innerHTML = mdq.config.lang.reload;
+            reloadButton.innerHTML = this.config.lang.reload;
             reloadButton.addEventListener('click', evt => {
 
                 this.init(this.config);
@@ -431,7 +437,7 @@ class MDQ {
                 let cb = document.createElement('input');
                 cb.setAttribute('type', 'checkbox');
                 cb.setAttribute('data-group', group);
-                cb.checked = mdq.currentGroups.includes(group);
+                cb.checked = this.currentGroups.includes(group);
                 cb.addEventListener('change', function (evt) {
                     let currentlySelected = this.checked;
 
@@ -443,15 +449,15 @@ class MDQ {
                             return;
                         }
                         // Remove it from the list and refresh
-                        let idx = mdq.currentGroups.indexOf(this.getAttribute('data-group'));
+                        let idx = this.currentGroups.indexOf(this.getAttribute('data-group'));
                         if (idx >= 0) {
-                            mdq.currentGroups.splice(idx, 1);
+                            this.currentGroups.splice(idx, 1);
                         }
                     } else {
                         // Add it, doesn't matter how many are already selected
-                        mdq.currentGroups.push(this.getAttribute('data-group'));
+                        this.currentGroups.push(this.getAttribute('data-group'));
                     }
-                    mdq.init(mdq.config);
+                    this.init(this.config);
                 });
 
                 let span = document.createElement('span');
