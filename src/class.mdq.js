@@ -105,6 +105,7 @@ class MDQ {
      * Everything this needs should be in instance variables filled by the construtor. 
      */
     async init() {
+        this.allQuestions = [];
         // Load questions, going in to groups if requested
         if (Array.isArray(this.config.questions)) {
             // Just load them all
