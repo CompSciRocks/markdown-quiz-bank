@@ -345,7 +345,7 @@ var mdq = {
         if (mdq.config.credit) {
             var creditDiv = document.createElement('div');
             creditDiv.classList.add('mdq-credit');
-            creditDiv.innerHTML = 'Quiz script by <a href="https://compsci.rocks/scripts/" target="_blank">CompSci.rocks</a>';
+            creditDiv.innerHTML = 'Quiz script by <a href="https://compscirocks.github.io/markdown-quiz-bank/" target="_blank">CompSci.rocks</a>';
             wrapper.appendChild(creditDiv);
         }
 
@@ -541,7 +541,7 @@ var mdq = {
         ret.rawContent = fileContent;
 
         // Need a randomish identifier for later
-        ret.hash = Math.random().toString(36).slice(-10);
+        ret.hash = Math.random().toString(36).substring(2);
 
         // Front matter
         ret.frontMatter = {};

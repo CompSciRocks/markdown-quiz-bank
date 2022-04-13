@@ -37,7 +37,7 @@ class MDQQuestion {
         fileContents = fileContents.replace(/\s*{%\s*endraw\s*%}\s*$/, '');
 
         // Need a randomish identifier for later
-        this.hash = Math.random().toString(36).slice(-10);
+        this.hash = Math.random().toString(36).substring(2);
 
         let fmMatch = fileContents.match(/^\s*?---\s*?(.*?)---/s);
         this.properties = fmMatch ? this.parseFrontMatter(fmMatch[1]) : {};
