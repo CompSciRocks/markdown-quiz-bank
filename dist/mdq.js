@@ -1015,7 +1015,7 @@ class MDQQuestion {
                         flags = flagMatch[1];
                     }
                     // Clear off regex delimiters
-                    regexString = correctValue.replace(/^\//, '').replace(/\/[gimy]*$/, '');
+                    let regexString = correctValue.replace(/^\//, '').replace(/\/[gimy]*$/, '');
 
                     let regex = new RegExp(regexString, flags);
                     correct = !!val.match(regex);
