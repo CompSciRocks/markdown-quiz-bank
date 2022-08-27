@@ -489,9 +489,10 @@ class MDQ {
      * @param {*} val 
      */
     static isTruthy(val) {
-        val = val | false;
-
-        if (typeof val === 'string') {
+        if (typeof val === 'undefined') {
+            return false;
+        }
+        else if (typeof val === 'string') {
             val = val.toLowerCase();
         }
         if (val == true || val == 'true' || val == '1') {
@@ -558,6 +559,56 @@ class MDQ {
         }
         return Object.keys(this.config.questions);
     }
+
+    /**
+     * Returns the style with all values expanded
+     * 
+     * style can either be the name of a defined style or an object
+     * in the same format as a defined style. All values are optional.
+     */
+    parseStyle(style) {
+        if (MDQ_Styles.hasOwnProperty(style)) {
+            // Defined theme, need to build it out
+            style = MDQ_Styles[style];
+        }
+    }
+
+    /**
+     * Formats a style block so that it has strings for style and id and
+     * an array for class names
+     * @param {*} block 
+     */
+    formatStyleBlock(block) {
+        if (typeof block === 'string' || block instanceof String) {
+            // String, split into classname and leave other blank
+            let classParts = [...new Set(block.split(/[\s|,]{1,}/))];
+            return {
+                className: classParts,
+                id: '',
+                style: '',
+            };
+        } else if (Array.isArray(block)) {
+            // Array, these will be class names
+            return {
+                className: [... new Set(block)],
+                id: '',
+                style: '',
+            };
+        }
+        // It is already an object, make sure it's got the right parts
+        let className = block.className || [];
+        if (typeof className === 'string' || className instanceof String) {
+            className = className.split(/[\s|,]{1,}/);
+        }
+        let id = block.id || '';
+        let style = block.style || '';
+
+        return {
+            className: [...new Set(className)],
+            id: id,
+            style: style,
+        };
+    }
 };/**
  * Container for a single question that's been loaded 
  */
@@ -607,7 +658,13 @@ class MDQQuestion {
 
         // Split on the section headers
         let sections = fileContents.split(/---[\t ]*?([A-Za-z ]+)/g);
+
         this.markdown = sections.shift().trim();
+
+        if (this.isFIB()) {
+            // Base64 the correct answer so it doesn't get messed up by escaping
+            this.markdown = this._encodeFIB(this.markdown);
+        }
 
         this.sections = {};
         for (let i = 0; i < sections.length - 1; i += 2) {
@@ -719,10 +776,7 @@ class MDQQuestion {
      * text. 
      */
     _setupFIB(contentDiv) {
-        console.info(contentDiv);
         let blanks = contentDiv.querySelectorAll('input[type="text"][data-type="fib"]');
-        console.info(blanks);
-        console.info(contentDiv.querySelectorAll('div[data-hash="' + this.hash + '"]'));
     }
 
     /**
@@ -875,6 +929,17 @@ class MDQQuestion {
     }
 
     /**
+     * Base64 encode the correct answer in FIB questions so that it doesn't potentially cause
+     * issues when running through marked. 
+     */
+    _encodeFIB(content) {
+        content = content.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
+            return '___(' + btoa(correct) + ')[' + opts + ']';
+        });
+        return content;
+    }
+
+    /**
      * Convert the FIB placeholders into text inputs or
      * dropdowns. 
      * 
@@ -884,7 +949,6 @@ class MDQQuestion {
         // Text input fields 
         content = content.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
             opts = this._parseFIBOptions(opts);
-
             let input = document.createElement('input');
             input.setAttribute('data-type', 'fib');
             input.setAttribute('data-hash', this.hash);
@@ -998,8 +1062,7 @@ class MDQQuestion {
                 // We only care if there's actually a value
                 let json = JSON.parse(input.getAttribute('data-opts'));
                 let correct = false;
-                let correctValue = input.getAttribute('data-c');
-
+                let correctValue = atob(input.getAttribute('data-c'));
                 if (MDQ.isTruthy(json.contains)) {
                     // Correct if it contains the key value
                     if (!MDQ.isTruthy(json.caseSensitive)) {
@@ -1016,7 +1079,6 @@ class MDQQuestion {
                     }
                     // Clear off regex delimiters
                     let regexString = correctValue.replace(/^\//, '').replace(/\/[gimy]*$/, '');
-
                     let regex = new RegExp(regexString, flags);
                     correct = !!val.match(regex);
                 } else {
@@ -1122,4 +1184,59 @@ class MDQQuestion {
         return need;
     }
 
+};let MDQ_Styles = {
+
+    /**
+     * Default styles. These are always applied, even if another
+     * theme is selected. 
+     */
+    default: {
+        select: {
+            className: [],
+            style: '',
+            id: ''
+        },
+        button: {
+            primary: {
+                className: [],
+                style: '',
+                id: '',
+            },
+            secondary: {
+                className: [],
+                style: '',
+                id: '',
+            },
+            group: {
+                className: ['mdq-button-group'],
+                style: '',
+                id: '',
+            },
+        },
+        wrap: {
+            className: 'mdq-wrap',
+            style: '',
+            id: '',
+        },
+        input: {
+            text: {},
+            select: '',
+            radio: '',
+        }
+    },
+
+    bootstrap5: {
+        select: 'form-select',
+        button: {
+            primary: 'btn btn-primary',
+            secondary: 'btn btn-secondary',
+            group: 'btn-group',
+        },
+        wrap: 'container',
+        input: {
+            text: 'form-control',
+            select: 'form-control',
+            radio: '',
+        }
+    }
 }

@@ -489,9 +489,10 @@ class MDQ {
      * @param {*} val 
      */
     static isTruthy(val) {
-        val = val | false;
-
-        if (typeof val === 'string') {
+        if (typeof val === 'undefined') {
+            return false;
+        }
+        else if (typeof val === 'string') {
             val = val.toLowerCase();
         }
         if (val == true || val == 'true' || val == '1') {
@@ -556,5 +557,55 @@ class MDQ {
             return [];
         }
         return Object.keys(this.config.questions);
+    }
+
+    /**
+     * Returns the style with all values expanded
+     * 
+     * style can either be the name of a defined style or an object
+     * in the same format as a defined style. All values are optional.
+     */
+    parseStyle(style) {
+        if (MDQ_Styles.hasOwnProperty(style)) {
+            // Defined theme, need to build it out
+            style = MDQ_Styles[style];
+        }
+    }
+
+    /**
+     * Formats a style block so that it has strings for style and id and
+     * an array for class names
+     * @param {*} block 
+     */
+    formatStyleBlock(block) {
+        if (typeof block === 'string' || block instanceof String) {
+            // String, split into classname and leave other blank
+            let classParts = [...new Set(block.split(/[\s|,]{1,}/))];
+            return {
+                className: classParts,
+                id: '',
+                style: '',
+            };
+        } else if (Array.isArray(block)) {
+            // Array, these will be class names
+            return {
+                className: [... new Set(block)],
+                id: '',
+                style: '',
+            };
+        }
+        // It is already an object, make sure it's got the right parts
+        let className = block.className || [];
+        if (typeof className === 'string' || className instanceof String) {
+            className = className.split(/[\s|,]{1,}/);
+        }
+        let id = block.id || '';
+        let style = block.style || '';
+
+        return {
+            className: [...new Set(className)],
+            id: id,
+            style: style,
+        };
     }
 }
