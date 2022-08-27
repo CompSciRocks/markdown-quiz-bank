@@ -6,7 +6,7 @@ module.exports = function (grunt) {
             options: {
                 separator: ';',
             }, dist: {
-                src: ['src/class.mdq.js', 'src/class.question.js'],
+                src: ['src/class.mdq.js', 'src/class.question.js', 'src/mdqstyles.js'],
                 dest: 'dist/mdq.js',
             },
         },

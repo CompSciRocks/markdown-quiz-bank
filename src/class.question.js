@@ -47,7 +47,13 @@ class MDQQuestion {
 
         // Split on the section headers
         let sections = fileContents.split(/---[\t ]*?([A-Za-z ]+)/g);
+
         this.markdown = sections.shift().trim();
+
+        if (this.isFIB()) {
+            // Base64 the correct answer so it doesn't get messed up by escaping
+            this.markdown = this._encodeFIB(this.markdown);
+        }
 
         this.sections = {};
         for (let i = 0; i < sections.length - 1; i += 2) {
@@ -159,10 +165,7 @@ class MDQQuestion {
      * text. 
      */
     _setupFIB(contentDiv) {
-        console.info(contentDiv);
         let blanks = contentDiv.querySelectorAll('input[type="text"][data-type="fib"]');
-        console.info(blanks);
-        console.info(contentDiv.querySelectorAll('div[data-hash="' + this.hash + '"]'));
     }
 
     /**
@@ -315,6 +318,17 @@ class MDQQuestion {
     }
 
     /**
+     * Base64 encode the correct answer in FIB questions so that it doesn't potentially cause
+     * issues when running through marked. 
+     */
+    _encodeFIB(content) {
+        content = content.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
+            return '___(' + btoa(correct) + ')[' + opts + ']';
+        });
+        return content;
+    }
+
+    /**
      * Convert the FIB placeholders into text inputs or
      * dropdowns. 
      * 
@@ -324,7 +338,6 @@ class MDQQuestion {
         // Text input fields 
         content = content.replace(/___\((.*?)\)\[(.*?)\]/g, (match, correct, opts) => {
             opts = this._parseFIBOptions(opts);
-
             let input = document.createElement('input');
             input.setAttribute('data-type', 'fib');
             input.setAttribute('data-hash', this.hash);
@@ -438,8 +451,7 @@ class MDQQuestion {
                 // We only care if there's actually a value
                 let json = JSON.parse(input.getAttribute('data-opts'));
                 let correct = false;
-                let correctValue = input.getAttribute('data-c');
-
+                let correctValue = atob(input.getAttribute('data-c'));
                 if (MDQ.isTruthy(json.contains)) {
                     // Correct if it contains the key value
                     if (!MDQ.isTruthy(json.caseSensitive)) {
@@ -456,7 +468,6 @@ class MDQQuestion {
                     }
                     // Clear off regex delimiters
                     let regexString = correctValue.replace(/^\//, '').replace(/\/[gimy]*$/, '');
-
                     let regex = new RegExp(regexString, flags);
                     correct = !!val.match(regex);
                 } else {
