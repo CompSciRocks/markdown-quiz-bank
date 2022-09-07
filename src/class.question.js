@@ -46,7 +46,8 @@ class MDQQuestion {
         fileContents = fileContents.replace(/^\s*?---\s*?(.*?)---/s, '').trim();
 
         // Split on the section headers
-        let sections = fileContents.split(/---[\t ]*?([A-Za-z ]+)/g);
+        // let sections = fileContents.split(/---[\t ]*?([A-Za-z ]+)/g);
+        let sections = fileContents.split(/---([A-Za-z]+)/g);
 
         this.markdown = sections.shift().trim();
 
