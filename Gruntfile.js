@@ -39,7 +39,7 @@ module.exports = function (grunt) {
         uglify: {
             dist: {
                 options: {
-                    banner: '/*\t<%= pkg.name %> - <%= pkg.version %>\n *\n *\t(c) <%= grunt.template.today("yyyy") %> Aelora Web Services, LLC\n *\thttps://compscirocks.github.io/markdown-quiz-bank/\n */\n',
+                    banner: '/*\t<%= pkg.name %> - <%= pkg.version %>\n *\n *\t(c) <%= grunt.template.today("yyyy") %> Aelora Web Services, LLC\n *\thttps://docs.compsci.rocks/mdq/\n */\n',
                 },
                 files: {
                     'dist/mdq.min.js': 'dist/mdq.js',

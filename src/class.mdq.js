@@ -338,7 +338,7 @@ class MDQ {
         if (this.config.credit) {
             var creditDiv = document.createElement('div');
             creditDiv.classList.add('mdq-credit');
-            creditDiv.innerHTML = 'Quiz script by <a href="https://compscirocks.github.io/markdown-quiz-bank/" target="_blank">CompSci.rocks</a>';
+            creditDiv.innerHTML = 'Quiz script by <a href="https://docs.compsci.rocks/mdq/" target="_blank">CompSci.rocks</a>';
             wrapper.appendChild(creditDiv);
         }
 
